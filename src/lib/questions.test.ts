@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import meta from "../../data/meta.json";
 import { byId, hasImage, questions } from "./questions";
 
 const pub = (src: string) => path.join(process.cwd(), "public", src);
@@ -64,6 +65,16 @@ describe("questions.json", () => {
       const pics = [q.image, ...q.options.map((o) => o.image)].filter(Boolean);
       for (const p of pics) expect(existsSync(pub(p!.src)), `q${q.id} ${p!.src}`).toBe(true);
     }
+  });
+
+  it("has a meta file that matches the questions, so pages can avoid loading them all", () => {
+    expect(meta.count).toBe(questions.length);
+    const srcs = new Set<string>();
+    for (const q of questions) {
+      if (q.image) srcs.add(q.image.src);
+      for (const o of q.options) if (o.image) srcs.add(o.image.src);
+    }
+    expect([...meta.images].sort()).toEqual([...srcs].sort());
   });
 
   it("has enough image questions for the exam minimum", () => {

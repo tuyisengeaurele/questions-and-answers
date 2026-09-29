@@ -6,7 +6,8 @@ const isNum = (n: unknown): n is number => typeof n === "number" && Number.isFin
 const isStat = (s: unknown): s is QStat =>
   typeof s === "object" && s !== null &&
   isNum((s as QStat).seen) && isNum((s as QStat).correct) && isNum((s as QStat).wrong) &&
-  ((s as QStat).last === "right" || (s as QStat).last === "wrong");
+  ((s as QStat).last === "right" || (s as QStat).last === "wrong") &&
+  ((s as QStat).run === undefined || isNum((s as QStat).run));
 const isExam = (e: unknown): e is ExamResult =>
   typeof e === "object" && e !== null &&
   isNum((e as ExamResult).at) && isNum((e as ExamResult).correct) && isNum((e as ExamResult).total) &&
@@ -43,10 +44,14 @@ export function loadProgress(storage: Pick<Storage, "getItem"> | null): Progress
   }
 }
 
-export function saveProgress(storage: Pick<Storage, "setItem"> | null, p: Progress): boolean {
+export function saveProgress(
+  storage: (Pick<Storage, "setItem"> & Partial<Pick<Storage, "getItem">>) | null,
+  p: Progress,
+): boolean {
   if (!storage) return false;
   try {
-    storage.setItem(KEY, JSON.stringify(p));
+    const next = JSON.stringify(p);
+    if (storage.getItem?.(KEY) !== next) storage.setItem(KEY, next);
     return true;
   } catch {
     return false;

@@ -360,3 +360,13 @@ def test_pictures_with_a_transparency_mask_get_a_white_background(tmp_path):
     saved = Image.open(tmp_path / "img" / raw[0]["image"]["src"].split("/")[-1]).convert("RGB")
     assert min(saved.getpixel((2, 2))) > 240, "transparent corner must be white, not black"
     assert saved.getpixel((saved.width // 2, saved.height // 2))[0] > 200
+
+
+def test_meta_lists_the_count_and_every_picture_once():
+    from extract import build_meta
+
+    qs = [
+        {"id": 1, "image": {"src": "/q/a.webp", "w": 1, "h": 1}, "options": [{"key": "a"}]},
+        {"id": 2, "options": [{"key": "a", "image": {"src": "/q/b.webp", "w": 1, "h": 1}}, {"key": "b", "image": {"src": "/q/a.webp", "w": 1, "h": 1}}]},
+    ]
+    assert build_meta(qs) == {"count": 2, "images": ["/q/a.webp", "/q/b.webp"]}

@@ -8,21 +8,36 @@ const answer = (id: number, correct: boolean) => ({ type: "answer", id, correct 
 describe("reducer", () => {
   it("records a right answer", () => {
     const s = reducer(initialProgress(), answer(5, true));
-    expect(s.stats[5]).toEqual({ seen: 1, correct: 1, wrong: 0, last: "right" });
+    expect(s.stats[5]).toEqual({ seen: 1, correct: 1, wrong: 0, last: "right", run: 1 });
     expect([...seenIds(s)]).toEqual([5]);
   });
 
   it("tracks wrong answers and lists them as mistakes", () => {
     const s = reducer(initialProgress(), answer(4, false));
-    expect(s.stats[4]).toEqual({ seen: 1, correct: 0, wrong: 1, last: "wrong" });
+    expect(s.stats[4]).toEqual({ seen: 1, correct: 0, wrong: 1, last: "wrong", run: 0 });
     expect(mistakeIds(s)).toEqual([4]);
   });
 
-  it("clears a mistake once the question is answered right", () => {
+  it("keeps a mistake until it has been answered right twice in a row", () => {
     let s = reducer(initialProgress(), answer(7, false));
     s = reducer(s, answer(7, true));
+    expect(mistakeIds(s)).toEqual([7]);
+    s = reducer(s, answer(7, false));
+    s = reducer(s, answer(7, true));
+    expect(mistakeIds(s)).toEqual([7]);
+    s = reducer(s, answer(7, true));
     expect(mistakeIds(s)).toEqual([]);
-    expect(s.stats[7]).toMatchObject({ seen: 2, correct: 1, wrong: 1 });
+    expect(s.stats[7]).toMatchObject({ seen: 5, correct: 3, wrong: 2, run: 2 });
+  });
+
+  it("never lists a question that was always answered right", () => {
+    const s = reducer(initialProgress(), answer(9, true));
+    expect(mistakeIds(s)).toEqual([]);
+  });
+
+  it("treats older saves without a run count as already cleared when the last answer was right", () => {
+    const old = { ...initialProgress(), stats: { 3: { seen: 2, correct: 1, wrong: 1, last: "right" as const }, 4: { seen: 1, correct: 0, wrong: 1, last: "wrong" as const } } };
+    expect(mistakeIds(old)).toEqual([4]);
   });
 
   it("keeps the last 10 exams, newest first", () => {
@@ -81,6 +96,23 @@ describe("storage", () => {
     expect(summarize(p, 100).seen).toBe(1);
   });
 
+  it("does not rewrite storage when nothing changed, so tabs cannot ping-pong", () => {
+    let writes = 0;
+    let stored = "";
+    const store = { getItem: () => stored || null, setItem: (_k: string, v: string) => { writes++; stored = v; } };
+    const p = reducer(initialProgress(), answer(1, true));
+    saveProgress(store, p);
+    saveProgress(store, p);
+    expect(writes).toBe(1);
+  });
+
+  it("keeps the run count of a saved question", () => {
+    const p = reducer(reducer(initialProgress(), answer(2, false)), answer(2, true));
+    let saved = "";
+    saveProgress({ setItem: (_k, v) => void (saved = v) }, p);
+    expect(loadProgress(fake(saved)).stats[2].run).toBe(1);
+  });
+
   it("reports failure instead of throwing when saving is blocked", () => {
     const throwing = { setItem: () => { throw new Error("quota"); } };
     expect(saveProgress(throwing, initialProgress())).toBe(false);
@@ -97,5 +129,14 @@ describe("summarize", () => {
     s = reducer(s, { type: "exam", result: { at: 1, correct: 15, total: 20, passed: true } });
     expect(summarize(s, 100)).toEqual({ answered: 3, seen: 2, accuracy: 33, mistakes: 1, unseen: 98, examsPassed: 1 });
     expect(summarize(initialProgress(), 100).accuracy).toBe(0);
+  });
+});
+
+describe("sync from another tab", () => {
+  it("adopts different progress and keeps the same object for identical progress", () => {
+    const mine = reducer(initialProgress(), answer(1, true));
+    const theirs = reducer(mine, answer(2, false));
+    expect(reducer(mine, { type: "sync", state: theirs })).toBe(theirs);
+    expect(reducer(mine, { type: "sync", state: JSON.parse(JSON.stringify(mine)) })).toBe(mine);
   });
 });

@@ -1,13 +1,14 @@
 export type Theme = "light" | "dark";
+export type ThemePref = Theme | "system";
 
 export const THEME_KEY = "ikizamini:theme";
 
-export const parseTheme = (value: unknown): Theme | null => (value === "light" || value === "dark" ? value : null);
+export const parsePref = (value: unknown): ThemePref => (value === "light" || value === "dark" ? value : "system");
 
-export const effectiveTheme = (stored: Theme | null, prefersLight: boolean): Theme =>
-  stored ?? (prefersLight ? "light" : "dark");
+export const effectiveTheme = (pref: ThemePref, prefersLight: boolean): Theme =>
+  pref === "system" ? (prefersLight ? "light" : "dark") : pref;
 
-export const toggled = (theme: Theme): Theme => (theme === "dark" ? "light" : "dark");
+export const nextPref = (pref: ThemePref): ThemePref => (pref === "system" ? "light" : pref === "light" ? "dark" : "system");
 
 /** Runs in <head> before first paint so a saved choice never flashes the wrong theme. */
-export const themeInitScript = `try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+export const themeInitScript = `try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});var r=document.documentElement;if(t==="light"||t==="dark"){r.dataset.theme=t;r.dataset.pref=t}else{r.dataset.pref="system"}}catch(e){document.documentElement.dataset.pref="system"}`;

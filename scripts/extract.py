@@ -306,6 +306,18 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
     return lines
 
 
+def build_meta(questions: list[dict]) -> dict:
+    """What the pages need without loading every question: the count and every picture."""
+    images = set()
+    for q in questions:
+        if q.get("image"):
+            images.add(q["image"]["src"])
+        for o in q["options"]:
+            if o.get("image"):
+                images.add(o["image"]["src"])
+    return {"count": len(questions), "images": sorted(images)}
+
+
 def main() -> None:
     overrides_path = ROOT / "data" / "overrides.json"
     overrides = json.loads(overrides_path.read_text(encoding="utf-8")) if overrides_path.exists() else {}
@@ -320,6 +332,9 @@ def main() -> None:
     (ROOT / "data").mkdir(exist_ok=True)
     (ROOT / "data" / "questions.json").write_text(
         json.dumps(questions, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+    )
+    (ROOT / "data" / "meta.json").write_text(
+        json.dumps(build_meta(questions), ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
     )
     with_images = sum(1 for q in questions if q.get("image") or any(o.get("image") for o in q["options"]))
     body = "\n".join(report) if report else "Nothing to report."
