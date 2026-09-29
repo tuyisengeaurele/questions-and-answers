@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { RegisterSW } from "@/components/register-sw";
 import { ProgressProvider } from "@/components/progress-provider";
 import { TabBar } from "@/components/tab-bar";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
@@ -15,12 +16,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#131518",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f3ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#131518" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={geist.variable}>
+    <html lang="en" className={geist.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-dvh antialiased">
         <ProgressProvider>
           <TabBar />

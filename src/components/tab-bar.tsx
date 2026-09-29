@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
   { href: "/", label: "Home" },
@@ -37,6 +38,9 @@ export function TabBar() {
             );
           })}
         </ul>
+        <div className="md:ml-auto">
+          <ThemeToggle />
+        </div>
       </div>
     </nav>
   );

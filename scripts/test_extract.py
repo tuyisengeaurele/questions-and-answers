@@ -331,3 +331,32 @@ def test_picture_printed_just_above_the_next_stem_belongs_to_that_question(tmp_p
     raw = parse_lines(read_pdf(_make_pdf(tmp_path, draw), tmp_path / "img"))
     assert "image" not in raw[0] and all("image" not in o for o in raw[0]["options"])
     assert raw[1]["image"]["src"].endswith(".webp")
+
+
+def test_pictures_with_a_transparency_mask_get_a_white_background(tmp_path):
+    import io
+
+    import pymupdf
+    from PIL import Image
+
+    from extract import read_pdf
+
+    # A red square in the middle, fully transparent around it: the PDF keeps the mask separately.
+    im = Image.new("RGBA", (80, 80), (0, 0, 0, 0))
+    for x in range(30, 50):
+        for y in range(30, 50):
+            im.putpixel((x, y), (255, 0, 0, 255))
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+    doc = pymupdf.open()
+    page = doc.new_page(width=400, height=500)
+    page.insert_text((50, 80), "1. Icyapa?")
+    page.insert_image(pymupdf.Rect(60, 100, 140, 180), stream=buf.getvalue())
+    page.insert_text((50, 200), "a) x")
+    path = tmp_path / "mask.pdf"
+    doc.save(path)
+
+    raw = parse_lines(read_pdf(path, tmp_path / "img"))
+    saved = Image.open(tmp_path / "img" / raw[0]["image"]["src"].split("/")[-1]).convert("RGB")
+    assert min(saved.getpixel((2, 2))) > 240, "transparent corner must be white, not black"
+    assert saved.getpixel((saved.width // 2, saved.height // 2))[0] > 200

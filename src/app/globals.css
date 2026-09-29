@@ -14,9 +14,10 @@
   color-scheme: dark;
 }
 
+/* System light theme, unless the visitor picked dark. */
 @media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f2f3ee;
+  :root:not([data-theme="dark"]) {
+      --bg: #f2f3ee;
     --panel: #ffffff;
     --panel2: #eceee6;
     --line: #dcdfd4;
@@ -26,6 +27,40 @@
     --accent: #4d7300;
     color-scheme: light;
   }
+}
+
+/* The visitor's own choice wins over the system setting. */
+:root[data-theme="light"] {
+    --bg: #f2f3ee;
+    --panel: #ffffff;
+    --panel2: #eceee6;
+    --line: #dcdfd4;
+    --text: #15171a;
+    --mute: #5c636b;
+    --bad: #c2453a;
+    --accent: #4d7300;
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #131518;
+  --panel: #1a1d21;
+  --panel2: #22262b;
+  --line: #2b3037;
+  --text: #eceeef;
+  --mute: #8f969e;
+  --bad: #e2766b;
+  --accent: #c6f135;
+  color-scheme: dark;
+}
+
+/* Toggle icon: sun while dark (tap for light), moon while light (tap for dark). */
+.icon-moon { display: none; }
+:root[data-theme="light"] .icon-sun { display: none; }
+:root[data-theme="light"] .icon-moon { display: block; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .icon-sun { display: none; }
+  :root:not([data-theme="dark"]) .icon-moon { display: block; }
 }
 
 @theme inline {

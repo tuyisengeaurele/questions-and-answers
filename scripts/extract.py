@@ -190,11 +190,21 @@ def finalize(raw: list[dict], overrides: dict, spelling: dict | None = None) -> 
     return out, report
 
 
-def save_image(data: bytes, out_dir: Path) -> dict:
-    from PIL import Image
+def save_image(data: bytes, out_dir: Path, mask: bytes | None = None, matte: bool = False) -> dict:
+    from PIL import Image, ImageChops, ImageOps
 
     im = Image.open(io.BytesIO(data))
-    if im.mode in ("RGBA", "LA", "P"):
+    if mask is not None:
+        alpha = Image.open(io.BytesIO(mask)).convert("L")
+        if alpha.size != im.size:
+            alpha = alpha.resize(im.size, Image.LANCZOS)
+        rgb = im.convert("RGB")
+        if matte:  # colours were premultiplied against black, so add the missing white back in
+            gap = ImageOps.invert(alpha)
+            im = Image.merge("RGB", [ImageChops.add(band, gap) for band in rgb.split()])
+        else:
+            im = Image.composite(rgb, Image.new("RGB", rgb.size, "white"), alpha)
+    elif im.mode in ("RGBA", "LA", "P"):
         im = im.convert("RGBA")
         bg = Image.new("RGB", im.size, "white")
         bg.paste(im, mask=im.split()[-1])
@@ -207,6 +217,32 @@ def save_image(data: bytes, out_dir: Path) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
     im.save(out_dir / name, "WEBP", quality=80, method=6)
     return {"src": f"/q/{name}", "w": im.width, "h": im.height}
+
+
+def picture_parts(doc, page, bbox, fallback: bytes) -> tuple[bytes, bytes | None, bool]:
+    """(colour picture, transparency mask, mask is premultiplied against black).
+
+    The PDF stores the mask as a separate image, so the raw picture has black where it should be clear.
+    """
+    import pymupdf
+
+    for info in page.get_images(full=True):
+        xref, smask = info[0], info[1]
+        for rect in page.get_image_rects(xref):
+            if all(abs(a - b) < 2 for a, b in zip(rect, bbox)):
+                try:
+                    pix = pymupdf.Pixmap(doc, xref)
+                    if pix.alpha:
+                        pix = pymupdf.Pixmap(pix, 0)
+                    if pix.colorspace is None or pix.colorspace.n != 3:
+                        pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
+                    if not smask:
+                        return pix.tobytes("png"), None, False
+                    mask = pymupdf.Pixmap(doc, smask)
+                    return pix.tobytes("png"), mask.tobytes("png"), "/Matte" in doc.xref_object(smask)
+                except Exception:
+                    return fallback, None, False
+    return fallback, None, False
 
 
 LABEL = re.compile(r"^\(?\s*([a-dA-D])\s*[.)]")
@@ -228,7 +264,7 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
                     continue  # bullets, rules
                 if y0 < 50 or y1 > page.rect.height - 40:
                     continue  # header/footer decoration
-                images.append(((x0, y0, x1, y1), block["image"]))
+                images.append(((x0, y0, x1, y1), picture_parts(doc, page, (x0, y0, x1, y1), block["image"])))
                 continue
             for line in block["lines"]:
                 spans = line["spans"]
@@ -254,7 +290,7 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
                 gap = x0 - lx1
                 if y0 <= centre <= y1 + 2 and -6 <= gap < best:
                     owner, best, label_box = key, gap, box
-            line = Line(image=save_image(data, img_dir), owner=owner)
+            line = Line(image=save_image(data[0], img_dir, data[1], data[2]), owner=owner)
             if label_box:
                 # Sit right after the label line so the next question's stem cannot jump ahead.
                 items.append((round(label_box[1] / 4), label_box[2] + 0.5, line))
