@@ -34,7 +34,7 @@ export default function Home() {
           aria-valuemax={questions.length}
           aria-valuenow={s.seen}
         >
-          <div className="h-full rounded-full bg-lime transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out" style={{ width: `${pct}%` }} />
         </div>
       </div>
 

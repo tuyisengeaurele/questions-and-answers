@@ -51,7 +51,7 @@ function Run({ set, onFinish }: { set: Question[]; onFinish: (answers: Answers) 
               onClick={() => setI(n)}
               aria-label={`Question ${n + 1}${answers[x.id] ? ", answered" : ""}`}
               aria-current={n === i}
-              className={`press tabular size-10 shrink-0 rounded-lg text-sm font-medium ${
+              className={`press tabular size-12 shrink-0 rounded-lg text-sm font-medium ${
                 n === i ? "bg-lime text-on-lime" : answers[x.id] ? "bg-panel2 text-text" : "border border-line text-mute"
               }`}
             >
@@ -97,7 +97,7 @@ function Result({ set, answers, onAgain }: { set: Question[]; answers: Answers; 
   return (
     <section className="space-y-6">
       <div className="rise space-y-2 pt-2 text-center">
-        <p className={`text-sm font-semibold uppercase tracking-wide ${passed ? "text-lime" : "text-bad"}`}>
+        <p className={`text-sm font-semibold uppercase tracking-wide ${passed ? "text-accent" : "text-bad"}`}>
           {passed ? "Passed" : "Not passed"}
         </p>
         <p className="tabular text-6xl font-semibold">

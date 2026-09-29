@@ -1,8 +1,18 @@
-const VERSION = "v1";
+const VERSION = "v2";
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
+const ROUTES = ["/", "/practice", "/exam", "/browse"];
 
-self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("install", (event) => {
+  // Real page requests, so the routes are cached as HTML and work offline straight away.
+  event.waitUntil(
+    caches
+      .open(PAGES)
+      .then((cache) => cache.addAll(ROUTES))
+      .catch(() => {})
+      .then(() => self.skipWaiting()),
+  );
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -21,16 +31,20 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  const isPage = req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html");
-  if (isPage) {
+  if (req.mode === "navigate") {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(PAGES).then((c) => c.put(req, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            event.waitUntil(caches.open(PAGES).then((c) => c.put(req, copy)));
+          }
           return res;
         })
-        .catch(async () => (await caches.match(req)) || (await caches.match("/")) || Response.error()),
+        .catch(async () => {
+          const path = await caches.match(url.pathname, { ignoreSearch: true });
+          return path || (await caches.match("/")) || Response.error();
+        }),
     );
     return;
   }

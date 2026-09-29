@@ -67,6 +67,20 @@ describe("storage", () => {
     expect(p.stats[3].seen).toBe(1);
   });
 
+  it("drops wrongly typed fields instead of crashing later", () => {
+    const bad = JSON.stringify({
+      v: 1,
+      stats: { 1: null, 2: { seen: 1, correct: 1, wrong: 0, last: "right" }, 3: { seen: "x" } },
+      exams: null,
+      cycle: "nope",
+    });
+    const p = loadProgress(fake(bad));
+    expect(Object.keys(p.stats)).toEqual(["2"]);
+    expect(p.exams).toEqual([]);
+    expect(p.cycle).toEqual([]);
+    expect(summarize(p, 100).seen).toBe(1);
+  });
+
   it("reports failure instead of throwing when saving is blocked", () => {
     const throwing = { setItem: () => { throw new Error("quota"); } };
     expect(saveProgress(throwing, initialProgress())).toBe(false);

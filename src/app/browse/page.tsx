@@ -35,7 +35,7 @@ export default function BrowsePage() {
           }}
           placeholder="Search questions or a number"
           aria-label="Search questions"
-          className="min-h-12 min-w-0 flex-1 rounded-xl border border-line bg-panel px-4 outline-none transition-colors focus:border-lime"
+          className="min-h-12 min-w-0 flex-1 rounded-xl border border-line bg-panel px-4 transition-colors focus:border-accent"
         />
         <button
           onClick={() => {

@@ -67,12 +67,12 @@ export function Round({ questions, onExit }: { questions: Question[]; onExit: ()
   return (
     <section>
       <header className="mb-5 flex items-center gap-4">
-        <button onClick={onExit} className="press min-h-12 pr-2 text-sm text-mute">
+        <button onClick={onExit} className="press min-h-12 min-w-12 pr-2 text-sm text-mute">
           Quit
         </button>
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-panel2" aria-hidden>
           <div
-            className="h-full rounded-full bg-lime transition-[width] duration-300 ease-out"
+            className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
             style={{ width: `${((i + (picked ? 1 : 0)) / questions.length) * 100}%` }}
           />
         </div>

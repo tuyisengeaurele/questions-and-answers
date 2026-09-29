@@ -2,18 +2,25 @@ import { hasImage } from "./questions";
 import { shuffle, type Rand } from "./shuffle";
 import type { Question } from "./types";
 
-/** Pick `size` questions, guaranteeing `minImages` image questions when they exist. */
+/**
+ * Pick `size` questions, guaranteeing `minImages` image questions when they exist.
+ * `maxImages` caps how many image questions the filler may add on top of the guaranteed ones.
+ */
 export function pickSet(
   pool: readonly Question[],
   size: number,
   minImages: number,
   rand: Rand = Math.random,
+  maxImages: number = Infinity,
 ): Question[] {
   const withImg = shuffle(pool.filter(hasImage), rand);
   const without = shuffle(pool.filter((q) => !hasImage(q)), rand);
   const take = Math.min(minImages, withImg.length, size);
   const guaranteed = withImg.slice(0, take);
-  const filler = shuffle([...without, ...withImg.slice(take)], rand).slice(0, size - take);
+  const optional = withImg.slice(take);
+  const allowed = optional.slice(0, Math.max(0, maxImages - take));
+  const spare = optional.slice(allowed.length);
+  const filler = [...shuffle([...without, ...allowed], rand), ...spare].slice(0, size - take);
   return shuffle([...guaranteed, ...filler], rand);
 }
 
@@ -32,7 +39,10 @@ export function pickRound(
   const usedSet = new Set(used);
   const fresh = pool.filter((q) => !usedSet.has(q.id));
   if (fresh.length >= size) {
-    const round = pickSet(fresh, size, minImages, rand);
+    // Spread image questions evenly over the pass so the last rounds still have some.
+    const freshImages = fresh.filter(hasImage).length;
+    const target = Math.max(minImages, Math.round((size * freshImages) / fresh.length));
+    const round = pickSet(fresh, size, target, rand, target);
     return { round, used: [...used, ...round.map((q) => q.id)] };
   }
   const freshIds = new Set(fresh.map((q) => q.id));

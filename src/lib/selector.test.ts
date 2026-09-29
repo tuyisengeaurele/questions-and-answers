@@ -110,4 +110,17 @@ describe("pickRound", () => {
   it("copes with an empty pool", () => {
     expect(pickRound([], [1, 2], 10, 2)).toEqual({ round: [], used: [1, 2] });
   });
+
+  it("keeps image questions in every round of a full pass, including the last ones", () => {
+    for (let s = 1; s <= 10; s++) {
+      const rand = seeded(s);
+      const p = pool(70, 30); // 100 questions, 10 rounds
+      let used: number[] = [];
+      for (let r = 0; r < 10; r++) {
+        const next = pickRound(p, used, 10, 2, rand);
+        expect(next.round.filter(hasImage).length, `seed ${s} round ${r + 1}`).toBeGreaterThanOrEqual(2);
+        used = next.used;
+      }
+    }
+  });
 });

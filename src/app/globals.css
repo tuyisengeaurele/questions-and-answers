@@ -8,6 +8,7 @@
   --text: #eceeef;
   --mute: #8f969e;
   --lime: #c6f135;
+  --accent: #c6f135;
   --on-lime: #11140a;
   --bad: #e2766b;
   color-scheme: dark;
@@ -22,6 +23,7 @@
     --text: #15171a;
     --mute: #5c636b;
     --bad: #c2453a;
+    --accent: #4d7300;
     color-scheme: light;
   }
 }
@@ -34,6 +36,7 @@
   --color-text: var(--text);
   --color-mute: var(--mute);
   --color-lime: var(--lime);
+  --color-accent: var(--accent);
   --color-on-lime: var(--on-lime);
   --color-bad: var(--bad);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -47,6 +50,8 @@ body {
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Transitions: short, CSS-only, disabled under reduced motion. */
 @keyframes rise {
@@ -81,4 +86,5 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rise, .slide-in, .mark-in, .page-fade, .enter { animation: none; }
   .press { transition: none; }
+  *, ::before, ::after { transition-duration: 0.01ms !important; }
 }

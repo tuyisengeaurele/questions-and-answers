@@ -62,11 +62,11 @@ export function QuestionCard({ question, picked, reveal, disabled, onPick }: Pro
           const isWrongPick = reveal && o.key === picked && o.key !== question.answer;
           const isSelected = !reveal && o.key === picked;
           const style = isAnswer
-            ? "border-lime bg-lime/15"
+            ? "border-accent bg-lime/15"
             : isWrongPick
               ? "border-bad bg-bad/15"
               : isSelected
-                ? "border-lime bg-panel2"
+                ? "border-accent bg-panel2"
                 : reveal
                   ? "border-line bg-panel opacity-55"
                   : "border-line bg-panel hover:border-mute/50";
