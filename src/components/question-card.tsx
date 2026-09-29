@@ -74,7 +74,7 @@ export function QuestionCard({ question, picked, reveal, disabled, onPick }: Pro
             isAnswer || isSelected
               ? "bg-lime text-on-lime"
               : isWrongPick
-                ? "bg-bad text-on-lime"
+                ? "bg-bad text-on-bad"
                 : "bg-panel2 text-mute";
           return (
             <li key={o.key} className="enter" style={{ "--i": i } as React.CSSProperties}>

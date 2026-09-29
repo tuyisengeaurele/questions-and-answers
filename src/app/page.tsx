@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useProgress } from "@/components/progress-provider";
 import { questions } from "@/lib/questions";
 import { summarize } from "@/lib/stats";
@@ -9,6 +10,7 @@ const tile = "press rise flex min-h-20 flex-col justify-center rounded-2xl borde
 
 export default function Home() {
   const { progress, dispatch, persisted } = useProgress();
+  const confirm = useConfirm();
   const s = summarize(progress, questions.length);
   const pct = Math.round((s.seen / questions.length) * 100);
 
@@ -84,8 +86,14 @@ export default function Home() {
       )}
 
       <button
-        onClick={() => {
-          if (confirm("Erase all progress on this device?")) dispatch({ type: "reset" });
+        onClick={async () => {
+          const ok = await confirm({
+            title: "Erase all progress?",
+            message: "This clears your answers, mistakes and exam results on this device. It cannot be undone.",
+            confirmLabel: "Erase",
+            danger: true,
+          });
+          if (ok) dispatch({ type: "reset" });
         }}
         className="press min-h-12 w-full text-sm text-mute underline-offset-4 hover:underline"
       >

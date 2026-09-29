@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useCountdown } from "@/components/countdown";
 import { useProgress } from "@/components/progress-provider";
 import { QuestionCard } from "@/components/question-card";
@@ -14,6 +15,7 @@ import type { OptionKey, Question } from "@/lib/types";
 type Answers = Record<number, OptionKey | undefined>;
 
 function Run({ set, onFinish }: { set: Question[]; onFinish: (answers: Answers) => void }) {
+  const confirm = useConfirm();
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const answersRef = useRef<Answers>({});
@@ -78,8 +80,15 @@ function Run({ set, onFinish }: { set: Question[]; onFinish: (answers: Answers) 
         </button>
       </div>
       <button
-        onClick={() => {
-          if (unanswered === 0 || confirm(`${unanswered} unanswered. Submit anyway?`)) submit();
+        onClick={async () => {
+          if (unanswered === 0) return submit();
+          const ok = await confirm({
+            title: "Submit the exam?",
+            message: `${unanswered} ${unanswered === 1 ? "question is" : "questions are"} still unanswered and will count as wrong.`,
+            confirmLabel: "Submit",
+            cancelLabel: "Keep going",
+          });
+          if (ok) submit();
         }}
         className="press mt-3 min-h-14 w-full rounded-2xl bg-lime font-semibold text-on-lime"
       >

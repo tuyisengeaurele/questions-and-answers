@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { RegisterSW } from "@/components/register-sw";
+import { ConfirmProvider } from "@/components/confirm-dialog";
 import { ProgressProvider } from "@/components/progress-provider";
 import { TabBar } from "@/components/tab-bar";
 import { themeInitScript } from "@/lib/theme";
@@ -30,8 +31,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-dvh antialiased">
         <ProgressProvider>
-          <TabBar />
-          <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 md:pb-12 md:pt-24">{children}</main>
+          <ConfirmProvider>
+            <TabBar />
+            <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 md:pb-12 md:pt-24">{children}</main>
+          </ConfirmProvider>
         </ProgressProvider>
         <RegisterSW />
       </body>
