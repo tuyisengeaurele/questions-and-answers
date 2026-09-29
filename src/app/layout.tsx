@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { RegisterSW } from "@/components/register-sw";
 import { ProgressProvider } from "@/components/progress-provider";
 import { TabBar } from "@/components/tab-bar";
 import "./globals.css";
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TabBar />
           <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 md:pb-12 md:pt-24">{children}</main>
         </ProgressProvider>
+        <RegisterSW />
       </body>
     </html>
   );
