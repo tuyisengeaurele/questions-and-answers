@@ -16,7 +16,7 @@ Checked against `questions igazete.pdf` (the copy in Downloads is byte-identical
 - Ten questions had their options labelled `a a b c` and so on in the PDF; they are renumbered by position.
 
 ## Left as is, on purpose
-- Question 390 is left out: all four options are printed in red, so the PDF does not say which one is correct.
+- Question 390 has all four options printed in red, so the PDF does not say which is correct. The answer (b, "oya") was supplied by the owner and is set in `data/overrides.json`.
 - Numbering jumps and repeats in the PDF (for example 52 twice, 220 three times, 8 after 409) are kept; ids follow document order.
 - Two questions refer to a picture that the PDF does not contain (questions 359 and 385); they stay text-only.
 - Kinyarwanda wording that is merely informal or unusual is not touched.

@@ -9020,6 +9020,35 @@
   }
  },
  {
+  "id": 360,
+  "num": 390,
+  "text": "Umuhanda urombereje w’ibice byinshi. Ndashaka kunyura kuri izi kamyo ibyiri mugihe gito ibumoso icyarimwe, biremewe?",
+  "options": [
+   {
+    "key": "a",
+    "text": "yego,"
+   },
+   {
+    "key": "b",
+    "text": "oya"
+   },
+   {
+    "key": "c",
+    "text": "yego bikorewe ibumoso"
+   },
+   {
+    "key": "d",
+    "text": "ntagisubizo cy’ukuri"
+   }
+  ],
+  "answer": "b",
+  "image": {
+   "src": "/q/e30375bea5ce.webp",
+   "w": 480,
+   "h": 271
+  }
+ },
+ {
   "id": 361,
   "num": 391,
   "text": "K’umuyobozi w’ivatiri, iki cyapa kivuze iki?",

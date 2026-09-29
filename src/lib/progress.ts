@@ -47,6 +47,7 @@ export function reducer(state: Progress, action: Action): Progress {
       const prev = state.stats[action.id] ?? { seen: 0, correct: 0, wrong: 0, last: "right" as const, run: 0 };
       return {
         ...state,
+        cycle: state.cycle.includes(action.id) ? state.cycle : [...state.cycle, action.id],
         stats: {
           ...state.stats,
           [action.id]: {

@@ -81,30 +81,41 @@ describe("pickSet", () => {
 });
 
 describe("pickRound", () => {
+  /** Play a round the way the app does: each question answered is added to the used list. */
+  const play = (r: { round: Question[]; used: number[] }) => [...r.used, ...r.round.map((q) => q.id)];
+
   it("walks the whole pool before repeating", () => {
     const p = pool(20, 5); // 25 questions
     const r1 = pickRound(p, [], 10, 2, seeded(1));
-    const r2 = pickRound(p, r1.used, 10, 2, seeded(2));
+    const r2 = pickRound(p, play(r1), 10, 2, seeded(2));
     const ids = [...r1.round, ...r2.round].map((q) => q.id);
     expect(new Set(ids).size).toBe(20);
     expect(r1.round.filter(hasImage).length).toBeGreaterThanOrEqual(2);
     expect(r2.round.filter(hasImage).length).toBeGreaterThanOrEqual(2);
   });
 
-  it("finishes the leftovers first, then starts a new cycle", () => {
+  it("does not use up questions that were picked but never answered", () => {
     const p = pool(20, 5);
     const r1 = pickRound(p, [], 10, 2, seeded(1));
-    const r2 = pickRound(p, r1.used, 10, 2, seeded(2));
-    const r3 = pickRound(p, r2.used, 10, 2, seeded(3));
-    const seen = new Set(r2.used);
-    const leftovers = p.filter((q) => !seen.has(q.id)).map((q) => q.id);
+    expect(r1.used).toEqual([]);
+    const again = pickRound(p, r1.used, 10, 2, seeded(1));
+    expect(again.round.map((q) => q.id)).toEqual(r1.round.map((q) => q.id));
+  });
+
+  it("finishes the leftovers first, then starts a new pass with an empty used list", () => {
+    const p = pool(20, 5);
+    const r1 = pickRound(p, [], 10, 2, seeded(1));
+    const used2 = play(r1);
+    const r2 = pickRound(p, used2, 10, 2, seeded(2));
+    const used3 = play(r2);
+    const leftovers = p.filter((q) => !used3.includes(q.id)).map((q) => q.id);
     expect(leftovers).toHaveLength(5);
+    const r3 = pickRound(p, used3, 10, 2, seeded(3));
     const r3ids = r3.round.map((q) => q.id);
     expect(r3ids).toHaveLength(10);
     expect(new Set(r3ids).size).toBe(10);
     for (const id of leftovers) expect(r3ids).toContain(id);
-    expect(r3.used).toHaveLength(5);
-    expect(r3.used.every((id) => !leftovers.includes(id))).toBe(true);
+    expect(r3.used).toEqual([]);
   });
 
   it("copes with an empty pool", () => {
@@ -119,7 +130,7 @@ describe("pickRound", () => {
       for (let r = 0; r < 10; r++) {
         const next = pickRound(p, used, 10, 2, rand);
         expect(next.round.filter(hasImage).length, `seed ${s} round ${r + 1}`).toBeGreaterThanOrEqual(2);
-        used = next.used;
+        used = play(next);
       }
     }
   });

@@ -10,7 +10,7 @@ import { DEFAULT_ROUND_SIZE, ROUND_SIZES, roundMinImages } from "@/lib/constants
 import { mistakeIds, seenIds } from "@/lib/progress";
 import { byId, questions } from "@/lib/questions";
 import { pickRound } from "@/lib/selector";
-import { clearResume, loadRound, type RoundSave } from "@/lib/session";
+import { clearResume, loadRound, saveResume, type RoundSave } from "@/lib/session";
 import { getStorage } from "@/lib/storage";
 import type { Question } from "@/lib/types";
 
@@ -20,8 +20,6 @@ const FILTERS = ["all", "new", "mistakes"] as const;
 interface Active {
   questions: Question[];
   initial?: RoundSave;
-  /** Only rounds picked from the whole pool advance the practice cycle. */
-  cycle: boolean;
 }
 
 function Practice() {
@@ -54,28 +52,24 @@ function Practice() {
   }, [filter, progress]);
 
   function begin(next: Active) {
+    // Saved from the start, so leaving with the back button just pauses the round.
+    if (!next.initial) {
+      saveResume(getStorage(), "round", { ids: next.questions.map((q) => q.id), index: 0, picks: {}, savedAt: Date.now() });
+    }
     setActive(next);
     setRunId((n) => n + 1);
     setSaved(null);
   }
 
   function start() {
-    const used = filter === "all" ? progress.cycle : [];
-    const picked = pickRound(pool, used, size, roundMinImages(size));
-    if (filter === "all") dispatch({ type: "cycle", ids: picked.used });
-    begin({ questions: picked.round, cycle: filter === "all" });
+    const picked = pickRound(pool, filter === "all" ? progress.cycle : [], size, roundMinImages(size));
+    // A new pass over the pool starts empty; otherwise answered questions are added as they are answered.
+    if (filter === "all" && picked.used.length === 0 && progress.cycle.length > 0) dispatch({ type: "cycle", ids: [] });
+    begin({ questions: picked.round });
   }
 
   function resume(s: RoundSave) {
-    begin({ questions: s.ids.map((id) => byId.get(id)!), initial: s, cycle: false });
-  }
-
-  function leave(unanswered: number[]) {
-    // Questions never reached go back into the pool for this pass.
-    if (active?.cycle && unanswered.length) {
-      dispatch({ type: "cycle", ids: progress.cycle.filter((id) => !unanswered.includes(id)) });
-    }
-    setActive(null);
+    begin({ questions: s.ids.map((id) => byId.get(id)!), initial: s });
   }
 
   if (active) {
@@ -84,8 +78,8 @@ function Practice() {
         key={runId}
         questions={active.questions}
         initial={active.initial}
-        onExit={leave}
-        onRetry={(missed) => begin({ questions: missed, cycle: false })}
+        onExit={() => setActive(null)}
+        onRetry={(missed) => begin({ questions: missed })}
       />
     );
   }

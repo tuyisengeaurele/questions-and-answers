@@ -140,3 +140,14 @@ describe("sync from another tab", () => {
     expect(reducer(mine, { type: "sync", state: JSON.parse(JSON.stringify(mine)) })).toBe(mine);
   });
 });
+
+describe("practice pass", () => {
+  it("adds each answered question to the pass once, and the cycle action replaces it", () => {
+    let s = reducer(initialProgress(), answer(4, true));
+    s = reducer(s, answer(4, false));
+    s = reducer(s, answer(9, true));
+    expect(s.cycle).toEqual([4, 9]);
+    s = reducer(s, { type: "cycle", ids: [] });
+    expect(s.cycle).toEqual([]);
+  });
+});

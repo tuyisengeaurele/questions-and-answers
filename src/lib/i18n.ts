@@ -124,6 +124,7 @@ export const en = {
   "exam.chip": "Question {i}",
   "exam.chipAnswered": "Question {i}, answered",
   "exam.questions": "Questions",
+  "exam.expiredNote": "Time ran out while you were away, so this exam was marked with the answers you had given.",
 
   "browse.title": "Browse",
   "browse.placeholder": "Search questions or a number",
@@ -269,6 +270,7 @@ export const rw: Record<Key, string> = {
   "exam.chip": "Ikibazo {i}",
   "exam.chipAnswered": "Ikibazo {i}, cyasubijwe",
   "exam.questions": "Ibibazo",
+  "exam.expiredNote": "Igihe cyarangiye udahari, ikizamini cyabazwe ku bisubizo wari umaze gutanga.",
 
   "browse.title": "Ibibazo byose",
   "browse.placeholder": "Shakisha ikibazo cyangwa nimero",

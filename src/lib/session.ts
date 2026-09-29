@@ -79,3 +79,11 @@ export function loadExam(store: Store | null, now: number, known: (id: number) =
   if (!isNum(s.endsAt) || s.endsAt <= now) return null;
   return { ids: s.ids, index: s.index, answers: s.answers, endsAt: s.endsAt, savedAt: s.savedAt };
 }
+
+/** An exam whose time ran out while the app was closed, so it can still be scored. */
+export function loadExpiredExam(store: Store | null, now: number, known: (id: number) => boolean): ExamSave | null {
+  const s = read(store, "exam");
+  if (!s || !validCommon(s, now, known) || !validAnswers(s.answers, s.ids)) return null;
+  if (!isNum(s.endsAt) || s.endsAt > now) return null;
+  return { ids: s.ids, index: s.index, answers: s.answers, endsAt: s.endsAt, savedAt: s.savedAt };
+}

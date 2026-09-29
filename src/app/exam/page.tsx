@@ -19,7 +19,7 @@ import { optionIndexForKey } from "@/lib/keys";
 import { byId, questions } from "@/lib/questions";
 import { scoreExam } from "@/lib/scoring";
 import { pickSet } from "@/lib/selector";
-import { clearResume, loadExam, saveResume, type ExamSave } from "@/lib/session";
+import { clearResume, loadExam, loadExpiredExam, saveResume, type ExamSave } from "@/lib/session";
 import { getStorage } from "@/lib/storage";
 import type { OptionKey, Question } from "@/lib/types";
 
@@ -161,11 +161,13 @@ function Run({ set, endsAt, initial, onFinish }: RunProps) {
 function Result({
   set,
   answers,
+  expired,
   onAgain,
   onRetry,
 }: {
   set: Question[];
   answers: Answers;
+  expired?: boolean;
   onAgain: () => void;
   onRetry: (missed: Question[]) => void;
 }) {
@@ -177,6 +179,7 @@ function Result({
 
   return (
     <section className="space-y-6">
+      {expired && <p className="rise rounded-xl border border-line bg-panel p-3 text-sm text-mute">{t("exam.expiredNote")}</p>}
       <div className="rise space-y-2 pt-2 text-center">
         <p className={`text-sm font-semibold uppercase tracking-wide ${passed ? "text-accent" : "text-bad"}`}>
           {passed ? t("exam.passed") : t("exam.failed")}
@@ -233,7 +236,7 @@ function Result({
 type State =
   | { phase: "idle" }
   | { phase: "run"; set: Question[]; endsAt: number; initial?: ExamSave }
-  | { phase: "done"; set: Question[]; answers: Answers }
+  | { phase: "done"; set: Question[]; answers: Answers; expired?: boolean }
   | { phase: "retry"; set: Question[]; answers: Answers; missed: Question[] };
 
 export default function ExamPage() {
@@ -246,15 +249,26 @@ export default function ExamPage() {
   useEffect(() => {
     // Read after mount: a saved exam lives in this browser only.
     const time = Date.now();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from localStorage after mount
-    setSaved(loadExam(getStorage(), time, (id) => byId.has(id)));
+    const expired = loadExpiredExam(getStorage(), time, (id) => byId.has(id));
+    if (expired) {
+      // The clock ran out while the app was closed: mark it with the answers given.
+      finish(expired.ids.map((id) => byId.get(id)!), expired.answers, expired.endsAt, true);
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from localStorage after mount
+      setSaved(loadExam(getStorage(), time, (id) => byId.has(id)));
+    }
     setNow(time);
+    // Runs once on mount; `finish` only uses stable setters and the dispatcher.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function start() {
-    clearResume(getStorage(), "exam");
+    const set = pickSet(questions, EXAM_SIZE, EXAM_MIN_IMAGES);
+    const endsAt = Date.now() + EXAM_SECONDS * 1000;
+    // Saved from the first second, so leaving with the back button just pauses the exam.
+    saveResume(getStorage(), "exam", { ids: set.map((q) => q.id), index: 0, answers: {}, endsAt, savedAt: Date.now() });
     setSaved(null);
-    setState({ phase: "run", set: pickSet(questions, EXAM_SIZE, EXAM_MIN_IMAGES), endsAt: Date.now() + EXAM_SECONDS * 1000 });
+    setState({ phase: "run", set, endsAt });
   }
 
   function resume(s: ExamSave) {
@@ -262,14 +276,14 @@ export default function ExamPage() {
     setSaved(null);
   }
 
-  function finish(set: Question[], answers: Answers) {
+  function finish(set: Question[], answers: Answers, at = Date.now(), expired = false) {
     clearResume(getStorage(), "exam");
     const result = scoreExam(set, answers);
-    dispatch({ type: "exam", result: { at: Date.now(), ...result } });
+    dispatch({ type: "exam", result: { at, ...result } });
     for (const q of set) {
       if (answers[q.id]) dispatch({ type: "answer", id: q.id, correct: answers[q.id] === q.answer });
     }
-    setState({ phase: "done", set, answers });
+    setState({ phase: "done", set, answers, expired });
   }
 
   if (state.phase === "run") {
@@ -281,11 +295,12 @@ export default function ExamPage() {
     return <Round questions={state.missed} persist={false} onExit={() => setState({ phase: "done", set, answers })} />;
   }
   if (state.phase === "done") {
-    const { set, answers } = state;
+    const { set, answers, expired } = state;
     return (
       <Result
         set={set}
         answers={answers}
+        expired={expired}
         onAgain={start}
         onRetry={(missed) => setState({ phase: "retry", set, answers, missed })}
       />

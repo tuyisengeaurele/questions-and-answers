@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clearResume, loadExam, loadRound, saveResume, MAX_AGE_MS } from "./session";
+import { clearResume, loadExam, loadExpiredExam, loadRound, saveResume, MAX_AGE_MS } from "./session";
 
 function memory() {
   const data = new Map<string, string>();
@@ -67,5 +67,15 @@ describe("resume state", () => {
     expect(() => clearResume(blocked, "round")).not.toThrow();
     expect(loadRound(null, now, known)).toBeNull();
     expect(() => saveResume(null, "exam", { ids: [1], index: 0, answers: {}, endsAt: now + 1, savedAt: now })).not.toThrow();
+  });
+
+  it("hands back an exam whose time ran out while the app was closed, so it can be scored", () => {
+    const s = memory();
+    const save = { ids: [1, 2], index: 1, answers: { 1: "a" as const }, endsAt: now + 1000, savedAt: now };
+    saveResume(s, "exam", save);
+    expect(loadExpiredExam(s, now + 500, known)).toBeNull();
+    expect(loadExpiredExam(s, now + 2000, known)).toEqual(save);
+    expect(loadExpiredExam(s, now + MAX_AGE_MS + 5000, known)).toBeNull();
+    expect(loadExpiredExam(null, now, known)).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 # Extraction report
 
-404 questions found, 399 kept, 129 with images.
+404 questions found, 400 kept, 130 with images.
 
 - #53 (printed 52): note: numbering jumps from 52 to 52
 - #82 (printed 96): note: numbering jumps from 80 to 96
@@ -54,7 +54,6 @@
 - #351 (printed 380): wording: 'ntagisubizi' -> 'ntagisubizo'
 - #359 (printed 388): wording: 'umuvuduo' -> 'umuvuduko'
 - #360 (printed 390): note: numbering jumps from 388 to 390
-- #360 (printed 390): EXCLUDED: 4 red options ['a', 'b', 'c', 'd']: Umuhanda urombereje w’ibice byinshi. Ndashaka kunyura kuri izi kamyo i
 - #362 (printed 392): wording: 'cyukuri' -> 'cy’ukuri'
 - #363 (printed 393): wording: 'yitara' -> 'y’itara'
 - #364 (printed 394): wording: 'cyukuri' -> 'cy’ukuri'
