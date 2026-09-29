@@ -13,15 +13,20 @@ const isExam = (e: unknown): e is ExamResult =>
   isNum((e as ExamResult).at) && isNum((e as ExamResult).correct) && isNum((e as ExamResult).total) &&
   typeof (e as ExamResult).passed === "boolean";
 
+// Probing writes a test key and tells other tabs about it, so it is done once per page.
+let probed: Storage | null | undefined;
+
 export function getStorage(): Storage | null {
+  if (probed !== undefined) return probed;
   try {
     const s = window.localStorage;
     s.setItem("_t", "1");
     s.removeItem("_t");
-    return s;
+    probed = s;
   } catch {
-    return null;
+    probed = null;
   }
+  return probed;
 }
 
 export function loadProgress(storage: Pick<Storage, "getItem"> | null): Progress {

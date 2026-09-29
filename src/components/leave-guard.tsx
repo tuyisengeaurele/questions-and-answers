@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type MouseEvent } from "react";
 import { useConfirm } from "@/components/confirm-dialog";
 import { useT } from "@/components/lang-provider";
@@ -20,6 +20,7 @@ const Ctx = createContext<Value | null>(null);
 
 export function LeaveGuardProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const confirm = useConfirm();
   const { t } = useT();
   const guard = useRef<Guard | null>(null);
@@ -31,15 +32,14 @@ export function LeaveGuardProvider({ children }: { children: React.ReactNode }) 
   const guardClick = useCallback(
     (e: MouseEvent<HTMLAnchorElement>, href: string) => {
       const g = guard.current;
-      if (!g || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      // Tapping the tab of the page you are already on goes nowhere, so there is nothing to confirm.
+      if (!g || href === pathname || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
       e.preventDefault();
       void confirm({ title: g.title, message: g.message, confirmLabel: t("leave.confirm"), cancelLabel: t("leave.stay") }).then((ok) => {
-        if (!ok) return;
-        guard.current = null;
-        router.push(href);
+        if (ok) router.push(href);
       });
     },
-    [confirm, router, t],
+    [confirm, pathname, router, t],
   );
 
   const value = useMemo(() => ({ setGuard, guardClick }), [setGuard, guardClick]);

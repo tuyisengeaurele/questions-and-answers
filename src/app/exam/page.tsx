@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ActionBar, ActionBarSpacer } from "@/components/action-bar";
-import { useConfirm } from "@/components/confirm-dialog";
+import { useConfirm, useDismissConfirm } from "@/components/confirm-dialog";
 import { useCountdown } from "@/components/countdown";
 import { useT } from "@/components/lang-provider";
 import { useLeaveGuard } from "@/components/leave-guard";
@@ -35,6 +35,7 @@ interface RunProps {
 function Run({ set, endsAt, initial, onFinish }: RunProps) {
   const { t } = useT();
   const confirm = useConfirm();
+  const dismissConfirm = useDismissConfirm();
   const [i, setI] = useState(initial?.index ?? 0);
   const [answers, setAnswers] = useState<Answers>(initial?.answers ?? {});
   const answersRef = useRef<Answers>(initial?.answers ?? {});
@@ -45,6 +46,7 @@ function Run({ set, endsAt, initial, onFinish }: RunProps) {
   function submit() {
     if (finished.current) return;
     finished.current = true;
+    dismissConfirm();
     onFinish(answersRef.current);
   }
 
@@ -66,6 +68,7 @@ function Run({ set, endsAt, initial, onFinish }: RunProps) {
   function go(index: number) {
     if (index < 0 || index >= set.length) return;
     setI(index);
+    window.scrollTo({ top: 0 });
     remember(index, answersRef.current);
   }
 

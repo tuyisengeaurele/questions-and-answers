@@ -54,11 +54,12 @@ export function Round({ questions, initial, onExit, onRetry, persist = true }: P
 
   function next() {
     if (i + 1 >= questions.length) {
-      clearResume(getStorage(), "round");
+      if (persist) clearResume(getStorage(), "round");
       setDone(true);
     } else {
       setI(i + 1);
       remember(i + 1, picks);
+      window.scrollTo({ top: 0 });
     }
   }
 
@@ -70,7 +71,7 @@ export function Round({ questions, initial, onExit, onRetry, persist = true }: P
       cancelLabel: t("quit.stay"),
     });
     if (!ok) return;
-    clearResume(getStorage(), "round");
+    if (persist) clearResume(getStorage(), "round");
     onExit(questions.filter((x) => !picks[x.id]).map((x) => x.id));
   }
 

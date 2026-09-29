@@ -107,12 +107,11 @@ function Practice() {
         />
       )}
       <p className="text-mute">{t("practice.intro", { n: size })}</p>
-      <div role="tablist" aria-label={t("practice.filterLabel")} className="grid grid-cols-3 gap-1 rounded-2xl bg-panel p-1">
+      <div role="group" aria-label={t("practice.filterLabel")} className="grid grid-cols-3 gap-1 rounded-2xl bg-panel p-1">
         {FILTERS.map((f) => (
           <button
             key={f}
-            role="tab"
-            aria-selected={filter === f}
+            aria-pressed={filter === f}
             onClick={() => router.replace(f === "all" ? "/practice" : `/practice?filter=${f}`, { scroll: false })}
             className={`press min-h-12 rounded-xl text-sm font-medium ${filter === f ? "bg-lime text-on-lime" : "text-mute"}`}
           >

@@ -15,6 +15,7 @@ interface ConfirmOptions {
 type Confirm = (options: ConfirmOptions) => Promise<boolean>;
 
 const Ctx = createContext<Confirm | null>(null);
+const DismissCtx = createContext<(() => void) | null>(null);
 
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const { t } = useT();
@@ -34,6 +35,15 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     if (options && !dialog.current?.open) dialog.current?.showModal();
   }, [options]);
 
+  /** Close an open question without an answer, for when the moment has passed (for example the exam ended). */
+  const dismiss = useCallback(() => {
+    if (!resolver.current) return;
+    dialog.current?.close();
+    resolver.current(false);
+    resolver.current = null;
+    setOptions(null);
+  }, []);
+
   function close(answer: boolean) {
     dialog.current?.close();
     resolver.current?.(answer);
@@ -43,6 +53,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider value={confirm}>
+      <DismissCtx.Provider value={dismiss}>
       {children}
       <dialog
         ref={dialog}
@@ -89,6 +100,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </dialog>
+      </DismissCtx.Provider>
     </Ctx.Provider>
   );
 }
@@ -97,4 +109,10 @@ export function useConfirm(): Confirm {
   const confirm = useContext(Ctx);
   if (!confirm) throw new Error("useConfirm must be used inside ConfirmProvider");
   return confirm;
+}
+
+export function useDismissConfirm(): () => void {
+  const dismiss = useContext(DismissCtx);
+  if (!dismiss) throw new Error("useDismissConfirm must be used inside ConfirmProvider");
+  return dismiss;
 }

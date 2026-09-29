@@ -93,9 +93,9 @@ export default function Home() {
           [t("stat.accuracy"), num(`${s.accuracy}%`)],
           [t("stat.passed"), num(s.examsPassed)],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-xl bg-panel px-1 py-3">
-            <dd className="tabular text-lg font-semibold">{value}</dd>
+          <div key={label} className="flex flex-col-reverse rounded-xl bg-panel px-1 py-3">
             <dt className="text-xs text-mute">{label}</dt>
+            <dd className="tabular text-lg font-semibold">{value}</dd>
           </div>
         ))}
       </dl>

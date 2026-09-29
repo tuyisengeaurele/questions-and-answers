@@ -10,7 +10,14 @@ export function RegisterSW() {
     navigator.serviceWorker
       .register("/sw.js")
       .then(() => navigator.serviceWorker.ready)
-      .then(() => {
+      .then(async () => {
+        // On the first visit the worker only starts controlling the page a moment after it is ready.
+        if (!navigator.serviceWorker.controller) {
+          await new Promise<void>((resolve) => {
+            navigator.serviceWorker.addEventListener("controllerchange", () => resolve(), { once: true });
+            setTimeout(resolve, 4000);
+          });
+        }
         const warm = () => {
           void Promise.allSettled(pictureSources.map((s) => fetch(s))).then(() => {
             try {
