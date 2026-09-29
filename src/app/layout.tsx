@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { ProgressProvider } from "@/components/progress-provider";
+import { TabBar } from "@/components/tab-bar";
 import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
@@ -18,7 +20,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={geist.variable}>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        <ProgressProvider>
+          <TabBar />
+          <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 md:pb-12 md:pt-24">{children}</main>
+        </ProgressProvider>
+      </body>
     </html>
   );
 }
