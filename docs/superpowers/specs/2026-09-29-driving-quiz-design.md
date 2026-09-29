@@ -21,18 +21,25 @@ Next.js (App Router) + TypeScript + Tailwind, deployed to Vercel. Pages are stat
 ## Modes
 | Mode | Behaviour |
 |---|---|
-| Practice | One question at a time, random order, instant right/wrong, correct option highlighted. Optional filter: all / unseen / mistakes. |
+| Practice | Played in rounds of 10 random questions. Instant right/wrong, correct option highlighted, then the next question. Each round ends with a summary and XP earned. Optional filter: all / unseen / mistakes. |
+| Sprint | 60-second timer, answer as many as you can, best score kept. Quick and replayable. |
 | Mock exam | 20 random questions, countdown timer, no feedback until the end. Pass mark 12/20 (constants in one file so they are easy to change). Result screen, then a review of every question with your pick vs. the right answer. |
 | Mistakes | Practice restricted to questions answered wrong and not yet answered right since. |
 | Browse | Scrollable, searchable list of all questions with the answer shown. |
 
-## Shuffling and progress
-- Order is a Fisher–Yates shuffle over the eligible pool. Practice walks the whole pool before any question repeats.
-- Option order stays as printed, because many answers read "A and B are both correct", so shuffling options would break them.
+## Game feel
+Kept light so it stays simple: a streak counter with a small combo bump on consecutive right answers, XP per correct answer (bonus for streaks), and a level bar on the home screen that fills as you earn XP. A daily goal (default 20 questions) with a simple progress ring. Levels and XP are stored locally like the rest of the progress. No lives, no coins, no shop.
+
+## Shuffling and image questions
+- Question order is a Fisher–Yates shuffle over the eligible pool. Practice walks the whole pool before any question repeats.
+- Answer options are never shuffled. They stay in the order printed in the document (a, b, c, d), because many answers read "A and B are both correct".
+- Every mock exam and every practice round includes image questions: at least 4 of 20 in a mock exam and 2 of 10 in a round. These numbers are constants, clamped to however many image questions exist. The selector picks the image questions first at random, fills the rest from the text questions, then shuffles the final set so images do not cluster at the start.
+
+## Progress
 - Progress lives in `localStorage` under one versioned key: per question `{seen, correct, wrong, lastResult}` plus the last 10 mock results. Reads and writes are wrapped so the app still works if storage is blocked. A "Reset progress" button is on the home screen.
 
 ## Screens
-Home (start practice, mock exam, mistakes, browse, small stats row) → Question (progress bar, question, four options, Next) → Result (score, pass/fail, review link). Bottom tab bar on phones, top nav on wide screens.
+Home (level bar, daily goal ring, start practice, sprint, mock exam, mistakes, browse) → Question (progress bar, question, four options, Next) → Result (score, pass/fail, review link). Bottom tab bar on phones, top nav on wide screens.
 
 ## Visual design
 Graphite background and surfaces, one lime accent for primary actions and progress, off-white text. Dark by default, with a light theme that follows the system setting. Lime buttons carry dark text for contrast. Right answers use lime, wrong answers a muted coral, never red on graphite, so it does not collide with the PDF's red meaning. Plain system-quality typography (one clean sans, tabular numbers for the timer), generous tap targets (min 48px), no gradients, glass, or emoji decoration. Motion is limited to a short fade or slide on question change and respects reduced-motion.
@@ -47,9 +54,11 @@ Static output, one font (system stack or a single self-hosted file), images as W
 Missing image → question still renders. Storage unavailable → in-memory progress with a small note. Unparseable question → excluded from the app until fixed in `overrides.json`, and listed in the report.
 
 ## Testing
-- Unit tests (Vitest) for shuffle (permutation, no repeats before exhaustion), scoring and pass mark, progress reducer, and storage fallback.
+- Unit tests (Vitest) for shuffle (permutation, no repeats before exhaustion), the exam selector (minimum image count met, option order untouched), streak and XP rules, scoring and pass mark, progress reducer, and storage fallback.
 - A test that validates `questions.json`: every question has 2–4 options and exactly one valid answer key, and every referenced image exists.
 - Manual check on a phone-sized viewport for each screen.
 
 ## Git
+Remote: https://github.com/tuyisengeaurele/questions-and-answers (empty). It is added as `origin` locally; nothing is pushed until the owner says so.
+
 Small commits with clear messages, authored by the owner (Ange Aurele TUYISENGE, tuyisengeauris@gmail.com) via the existing git config. No co-author or generated-by lines. The PDF stays in the repo root but is not part of the deployed bundle.
