@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #131518;
+  --panel: #1a1d21;
+  --panel2: #22262b;
+  --line: #2b3037;
+  --text: #eceeef;
+  --mute: #8f969e;
+  --lime: #c6f135;
+  --on-lime: #11140a;
+  --bad: #e2766b;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f2f3ee;
+    --panel: #ffffff;
+    --panel2: #eceee6;
+    --line: #dcdfd4;
+    --text: #15171a;
+    --mute: #5c636b;
+    --bad: #c2453a;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-mute: var(--mute);
+  --color-lime: var(--lime);
+  --color-on-lime: var(--on-lime);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Transitions: short, CSS-only, disabled under reduced motion. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mark-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rise { animation: rise 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.slide-in { animation: slide-in 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.mark-in { animation: mark-in 0.18s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.page-fade { animation: fade 0.18s ease-out both; }
+/* Options enter one after another; set --i on each item. */
+.enter {
+  animation: rise 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms + 60ms);
+}
+.press { transition: transform 0.12s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease; }
+.press:active:not(:disabled) { transform: scale(0.985); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .slide-in, .mark-in, .page-fade, .enter { animation: none; }
+  .press { transition: none; }
+}
