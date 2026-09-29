@@ -1,13 +1,20 @@
 # Extraction report
 
-404 questions found, 403 kept, 129 with images.
+404 questions found, 399 kept, 129 with images.
 
 - #53 (printed 52): note: numbering jumps from 52 to 52
 - #82 (printed 96): note: numbering jumps from 80 to 96
 - #83 (printed 81): note: numbering jumps from 96 to 81
+- #91 (printed 89): wording: 'yimodoka' -> 'y’imodoka'
 - #131 (printed 130): note: numbering jumps from 128 to 130
 - #141 (printed 171): note: numbering jumps from 139 to 171
+- #146 (printed 176): note: dropped, duplicate of #9
+- #148 (printed 178): note: dropped, duplicate of #12
+- #181 (printed 211): wording: 'byukuri' -> 'by’ukuri'
+- #182 (printed 212): wording: 'byukuri' -> 'by’ukuri'
+- #182 (printed 212): note: dropped, duplicate of #181
 - #185 (printed 214): note: numbering jumps from 214 to 214
+- #189 (printed 218): wording: 'bibinyabiziga' -> 'b’ibinyabiziga'
 - #192 (printed 220): note: numbering jumps from 220 to 220
 - #193 (printed 220): note: numbering jumps from 220 to 220
 - #194 (printed 223): note: numbering jumps from 220 to 223
@@ -17,15 +24,43 @@
 - #198 (printed 227): note: numbering jumps from 227 to 227
 - #199 (printed 228): note: option labels printed as 'aabc', renumbered by position
 - #200 (printed 229): note: option labels printed as 'abbc', renumbered by position
+- #211 (printed 240): wording: 'gisubanura' -> 'gisobanura'
+- #212 (printed 241): wording: 'Ibisubizko' -> 'Ibisubizo'
+- #226 (printed 255): wording: 'cyukuri' -> 'cy’ukuri'
 - #227 (printed 256): note: option labels printed as 'aabc', renumbered by position
+- #233 (printed 262): wording: 'ikinyabizaga' -> 'ikinyabiziga'
 - #236 (printed 265): note: option labels printed as 'aabc', renumbered by position
+- #237 (printed 266): wording: 'ikinyabizaga' -> 'ikinyabiziga'
 - #238 (printed 267): note: option labels printed as 'abbc', renumbered by position
 - #241 (printed 270): note: option labels printed as 'aabc', renumbered by position
+- #246 (printed 275): wording: 'kinzira' -> 'k’inzira'
+- #247 (printed 276): wording: 'bibinyabiziga' -> 'b’ibinyabiziga'
 - #265 (printed 294): note: option labels printed as 'accd', renumbered by position
 - #270 (printed 299): note: option labels printed as 'aabc', renumbered by position
+- #270 (printed 299): wording: 'ikinyabizigaagomba' -> 'ikinyabiziga agomba'
 - #271 (printed 300): note: option labels printed as 'abbc', renumbered by position
+- #279 (printed 308): wording: 'umuvuuko' -> 'umuvuduko'
+- #283 (printed 312): wording: 'yikinyabiziga' -> 'y’ikinyabiziga'
+- #285 (printed 314): wording: 'wikinyabiziga' -> 'w’ikinyabiziga'
+- #299 (printed 328): wording: 'Umuvudoko' -> 'Umuvuduko'
+- #301 (printed 330): wording: 'kinyabizaga' -> 'kinyabiziga'
+- #304 (printed 333): wording: 'kugirano' -> 'kugirango'
+- #307 (printed 336): wording: 'ikinyabizaga' -> 'ikinyabiziga'
+- #313 (printed 342): wording: 'ikinyabaziga' -> 'ikinyabiziga'
+- #317 (printed 346): wording: 'ikinyabizaga' -> 'ikinyabiziga'
+- #329 (printed 358): wording: 'ibimenyestso' -> 'ibimenyetso'
+- #338 (printed 367): wording: 'cyukuri' -> 'cy’ukuri'
+- #349 (printed 378): note: dropped, duplicate of #335
+- #351 (printed 380): wording: 'ntagisubizi' -> 'ntagisubizo'
+- #359 (printed 388): wording: 'umuvuduo' -> 'umuvuduko'
 - #360 (printed 390): note: numbering jumps from 388 to 390
 - #360 (printed 390): EXCLUDED: 4 red options ['a', 'b', 'c', 'd']: Umuhanda urombereje w’ibice byinshi. Ndashaka kunyura kuri izi kamyo i
+- #362 (printed 392): wording: 'cyukuri' -> 'cy’ukuri'
+- #363 (printed 393): wording: 'yitara' -> 'y’itara'
+- #364 (printed 394): wording: 'cyukuri' -> 'cy’ukuri'
 - #365 (printed 395): note: option labels printed as 'aacd', renumbered by position
+- #370 (printed 400): wording: 'wikinyabiziga' -> 'w’ikinyabiziga'
+- #371 (printed 401): wording: 'nibinyabiziga' -> 'n’ibinyabiziga'
 - #380 (printed 8): note: numbering jumps from 409 to 8
 - #381 (printed 410): note: numbering jumps from 8 to 410
+- #381 (printed 410): wording: 'Birabijijwe' -> 'Birabujijwe'

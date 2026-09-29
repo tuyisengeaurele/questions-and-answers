@@ -28,6 +28,37 @@ describe("questions.json", () => {
     }
   });
 
+  it("puts pictures on the question, or on every option, never on just some options", () => {
+    for (const q of questions) {
+      const withPic = q.options.filter((o) => o.image).length;
+      expect([0, q.options.length], `q${q.id}`).toContain(withPic);
+      if (withPic) expect(q.image, `q${q.id} has both a question picture and option pictures`).toBeUndefined();
+      for (const o of q.options) if (o.image) expect(o.text, `q${q.id}${o.key} has text and a picture`).toBe("");
+    }
+  });
+
+  it("has tidy text: no stray brackets, double spaces, or space before punctuation", () => {
+    for (const q of questions) {
+      for (const [where, t] of [["stem", q.text], ...q.options.map((o) => [o.key, o.text] as const)]) {
+        if (!t) continue;
+        expect(t, `q${q.id} ${where}`).toBe(t.trim());
+        expect(t, `q${q.id} ${where} double space`).not.toMatch(/\s{2,}/);
+        expect(t, `q${q.id} ${where} space before punctuation`).not.toMatch(/\s[?,.:;!]/);
+        expect(t, `q${q.id} ${where} stray bracket`).not.toMatch(/^\)/);
+      }
+      expect(q.text[0], `q${q.id} stem starts lowercase`).toBe(q.text[0].toUpperCase());
+    }
+  });
+
+  it("has no repeated questions", () => {
+    const seen = new Map<string, number>();
+    for (const q of questions) {
+      const key = JSON.stringify([q.text.toLowerCase(), q.options.map((o) => [o.text.toLowerCase(), o.image?.src]), q.image?.src, q.answer]);
+      expect(seen.has(key), `q${q.id} repeats q${seen.get(key)}`).toBe(false);
+      seen.set(key, q.id);
+    }
+  });
+
   it("only references image files that exist", () => {
     for (const q of questions) {
       const pics = [q.image, ...q.options.map((o) => o.image)].filter(Boolean);

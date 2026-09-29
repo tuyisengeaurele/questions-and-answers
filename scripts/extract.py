@@ -89,11 +89,43 @@ def parse_lines(lines: list[Line]) -> list[dict]:
     return questions
 
 
-def finalize(raw: list[dict], overrides: dict) -> tuple[list[dict], list[str]]:
+def tidy(text: str, stem: bool = False) -> str:
+    """Whitespace, punctuation spacing and quote spacing. Never changes the words themselves."""
+    t = re.sub(r"\s+", " ", text.replace("\u00a0", " ")).strip()
+    t = re.sub(r"^\)\s*", "", t)  # stray bracket left over from a label
+    t = re.sub(r"\s+([,.:;?!])", r"\1", t)
+    t = re.sub(r"(?<=[A-Za-z]);(?=[a-z])", "\u2019", t)  # cy;umuhanda -> cy'umuhanda
+    t = re.sub(r"(?<=[A-Za-z])([,.:?!])(?=[A-Za-z]{2})", r"\1 ", t)
+    t = re.sub(r"\b([A-Za-z]{1,2})\u2019 (?=[a-z])", lambda m: m.group(1) + "\u2019", t)  # cy' ukuri -> cy'ukuri
+    t = re.sub(r"(?<=\w)\u201c", " \u201c", t)
+    t = re.sub(r"\u201d(?=\w)", "\u201d ", t)
+    if stem and t:
+        t = t[0].upper() + t[1:]
+    return t
+
+
+def respell(text: str, fixes: dict, changes: list | None = None) -> str:
+    """Replace known misspelt words, keeping a leading capital. Changed words are appended to `changes`."""
+
+    def sub(m: re.Match) -> str:
+        word = m.group(0)
+        new = fixes.get(word.lower())
+        if new is None:
+            return word
+        new = new[0].upper() + new[1:] if word[0].isupper() else new
+        if changes is not None:
+            changes.append((word, new))
+        return new
+
+    return re.sub(r"[A-Za-z]+", sub, text)
+
+
+def finalize(raw: list[dict], overrides: dict, spelling: dict | None = None) -> tuple[list[dict], list[str]]:
     """Validate raw questions, apply overrides, return (questions, report lines)."""
     out: list[dict] = []
     report: list[str] = []
     prev_num = None
+    seen: dict = {}
     for idx, q in enumerate(raw, start=1):
         label = f"- #{idx} (printed {q['num']})"
         ov = overrides.get(str(idx), {})
@@ -110,7 +142,18 @@ def finalize(raw: list[dict], overrides: dict) -> tuple[list[dict], list[str]]:
             if printed != KEYS[: len(printed)]:
                 report.append(f"{label}: note: option labels printed as '{printed}', renumbered by position")
         red = sorted({KEYS[i] for i in q["red"]})
-        text = ov.get("text", q["text"]).strip()
+        fixes = spelling or {}
+
+        def clean_text(value: str, is_stem: bool = False) -> str:
+            out = tidy(value, stem=is_stem)
+            changes: list = []
+            fixed = respell(out, fixes, changes)
+            for old, new in changes:
+                report.append(f"{label}: wording: '{old}' -> '{new}'")
+            return fixed
+
+        text = clean_text(ov.get("text", q["text"]), True)
+        options = [{**o, "text": clean_text(o["text"])} for o in options]
         answer = ov.get("answer") or (red[0] if len(red) == 1 else None)
         problems = []
         if not 2 <= len(options) <= 4:
@@ -125,6 +168,24 @@ def finalize(raw: list[dict], overrides: dict) -> tuple[list[dict], list[str]]:
         item = {"id": idx, "num": q["num"], "text": text, "options": options, "answer": answer}
         if "image" in q:
             item["image"] = q["image"]
+        for opt in item["options"]:
+            if opt["text"] and "image" in opt:
+                if "image" not in item:
+                    item["image"] = opt.pop("image")
+                    report.append(f"{label}: note: picture next to option {opt['key']} moved to the question")
+                else:
+                    report.append(f"{label}: note: option {opt['key']} has both text and a picture, kept as is")
+        signature = (
+            item["text"].lower(),
+            tuple(o["text"].lower() for o in item["options"]),
+            item.get("image", {}).get("src"),
+            tuple(o.get("image", {}).get("src") for o in item["options"]),
+            item["answer"],
+        )
+        if signature in seen:
+            report.append(f"{label}: note: dropped, duplicate of #{seen[signature]}")
+            continue
+        seen[signature] = idx
         out.append(item)
     return out, report
 
@@ -158,6 +219,7 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
     doc = pymupdf.open(path)
     for page in doc:
         texts: list[tuple[tuple, Line, str | None]] = []
+        stems: list[tuple] = []  # bbox of every line that starts a question
         images: list[tuple[tuple, tuple]] = []
         for block in page.get_text("dict")["blocks"]:
             if block["type"] == 1:
@@ -173,7 +235,11 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
                 text = clean("".join(s["text"] for s in spans))
                 red = any(s["text"].strip() and is_red(s["color"]) for s in spans)
                 m = LABEL.match(text.strip())
-                texts.append((tuple(line["bbox"]), Line(text=text, red=red), m[1].lower() if m else None))
+                # Only a bare label ("a)") can own a picture; "(a) some text" means the picture above is the question's.
+                bare = m and not text.strip()[m.end():].strip()
+                texts.append((tuple(line["bbox"]), Line(text=text, red=red), m[1].lower() if bare else None))
+                if Q_START.match(text.strip()) or Q_BARE.match(text.strip()):
+                    stems.append(tuple(line["bbox"]))
 
         items: list[tuple[float, float, Line]] = []
         for bbox, line, _ in texts:
@@ -193,7 +259,12 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
                 # Sit right after the label line so the next question's stem cannot jump ahead.
                 items.append((round(label_box[1] / 4), label_box[2] + 0.5, line))
             else:
-                items.append((round(y1 / 4), x0, line))
+                # A picture printed right beside a question's number line belongs to that question.
+                stem = next((b for b in stems if y1 - 25 <= (b[1] + b[3]) / 2 <= y1 + 15), None)
+                if stem is not None:
+                    items.append((round(stem[1] / 4), stem[2] + 0.5, line))
+                else:
+                    items.append((round(y0 / 4), x0, line))
         items.sort(key=lambda it: (it[0], it[1]))
         lines.extend(line for _, _, line in items)
     return lines
@@ -206,8 +277,10 @@ def main() -> None:
     if img_dir.exists():
         for old in img_dir.glob("*.webp"):
             old.unlink()
+    spelling_path = ROOT / "data" / "spelling.json"
+    spelling = json.loads(spelling_path.read_text(encoding="utf-8")) if spelling_path.exists() else {}
     raw = parse_lines(read_pdf(PDF, img_dir))
-    questions, report = finalize(raw, overrides)
+    questions, report = finalize(raw, overrides, spelling)
     (ROOT / "data").mkdir(exist_ok=True)
     (ROOT / "data" / "questions.json").write_text(
         json.dumps(questions, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"

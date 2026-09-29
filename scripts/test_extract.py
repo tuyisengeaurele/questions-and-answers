@@ -188,3 +188,146 @@ def test_mislabelled_options_are_renumbered_by_position_and_answer_follows():
     assert qs[0]["options"][1]["text"] == "y"
     assert qs[0]["answer"] == "b"
     assert any("renumbered" in r for r in report)
+
+
+# --- audit fixes ---------------------------------------------------------
+
+def test_stray_closing_bracket_is_removed_from_option_text():
+    raw = parse_lines([L("1. Q?"), L("a) x"), L("b) ) y", RED)])
+    qs, _ = finalize(raw, {})
+    assert qs[0]["options"][1]["text"] == "y"
+
+
+def test_tidy_fixes_spacing_punctuation_and_quotes():
+    from extract import tidy
+
+    assert tidy("Ni iki  ?") == "Ni iki?"
+    assert tidy("aha hakurikira :") == "aha hakurikira:"
+    assert tidy("umuhanda.ukingirijwe ni") == "umuhanda. ukingirijwe ni"
+    assert tidy("cy;umuhanda") == "cy\u2019umuhanda"
+    assert tidy("cy\u2019 ukuri") == "cy\u2019ukuri"
+    assert tidy("kivuga\u201cugukikira\u201dbitegetswe") == "kivuga \u201cugukikira\u201d bitegetswe"
+    assert tidy("m2.70 na 3.5 km") == "m2.70 na 3.5 km"
+    assert tidy("  iki cyapa  ", stem=True) == "Iki cyapa"
+
+
+def test_spelling_map_fixes_words_and_keeps_case_and_apostrophes():
+    from extract import respell
+
+    fix = {"ikinyabizaga": "ikinyabiziga", "cyukuri": "cy\u2019ukuri"}
+    assert respell("Ikinyabizaga na bw\u2019ikinyabizaga", fix) == "Ikinyabiziga na bw\u2019ikinyabiziga"
+    assert respell("nta gisubizo cyukuri", fix) == "nta gisubizo cy\u2019ukuri"
+    assert respell("ikinyabiziga", fix) == "ikinyabiziga"
+
+
+def test_finalize_applies_tidy_and_spelling():
+    raw = parse_lines([L("1. iki cyapa gisobanura iki ?"), L("a) ikinyabizaga", RED), L("b) y")])
+    qs, report = finalize(raw, {}, {"ikinyabizaga": "ikinyabiziga"})
+    assert qs[0]["text"] == "Iki cyapa gisobanura iki?"
+    assert qs[0]["options"][0]["text"] == "ikinyabiziga"
+    assert any("ikinyabizaga" in r and "ikinyabiziga" in r for r in report)
+
+
+def test_option_with_text_and_image_moves_the_image_to_the_stem():
+    raw = parse_lines([
+        L("1. Icyapa?"), L("(a) Birabujijwe", RED), owned("/q/s.webp", "a"), L("b) y"),
+    ])
+    qs, report = finalize(raw, {})
+    assert qs[0]["image"]["src"] == "/q/s.webp"
+    assert "image" not in qs[0]["options"][0]
+    assert any("moved to the question" in r for r in report)
+
+
+def test_text_and_image_option_stays_when_the_stem_already_has_a_picture():
+    raw = parse_lines([
+        L("1. Icyapa?"), img("/q/stem.webp"), L("(a) x", RED), owned("/q/opt.webp", "a"), L("b) y"),
+    ])
+    qs, report = finalize(raw, {})
+    assert qs[0]["image"]["src"] == "/q/stem.webp"
+    assert qs[0]["options"][0]["image"]["src"] == "/q/opt.webp"
+    assert any("has both text and a picture" in r for r in report)
+
+
+def test_exact_duplicate_questions_are_dropped_and_reported():
+    block = [L("Kunyuranaho bikorerwa:"), L("a) x"), L("b) y", RED)]
+    raw = parse_lines([L("9. " + block[0].text), *block[1:], L("176. " + block[0].text), *block[1:]])
+    qs, report = finalize(raw, {})
+    assert [q["id"] for q in qs] == [1]
+    assert any("duplicate of #1" in r for r in report)
+
+
+def test_same_stem_with_different_options_is_kept():
+    raw = parse_lines([
+        L("1. Iki cyapa gisobanura iki?"), L("a) x", RED), L("b) y"),
+        L("2. Iki cyapa gisobanura iki?"), L("a) p"), L("b) q", RED),
+    ])
+    qs, _ = finalize(raw, {})
+    assert len(qs) == 2
+
+
+# --- geometry: which pictures belong to the question and which to an option ----
+
+def _make_pdf(tmp_path, draw):
+    import io
+
+    import pymupdf
+    from PIL import Image
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=400, height=500)
+
+    def picture(rect, color):
+        buf = io.BytesIO()
+        Image.new("RGB", (80, 80), color).save(buf, "PNG")
+        page.insert_image(pymupdf.Rect(*rect), stream=buf.getvalue())
+
+    draw(page, picture)
+    path = tmp_path / "t.pdf"
+    doc.save(path)
+    return path
+
+
+def test_picture_above_a_text_option_belongs_to_the_question(tmp_path):
+    from extract import read_pdf
+
+    def draw(page, picture):
+        page.insert_text((50, 80), "1. Icyapa gisobanura iki?")
+        picture((60, 100, 140, 180), (200, 0, 0))
+        page.insert_text((50, 178), "(a) Birabujijwe kuwurenga")
+        page.insert_text((50, 200), "(b) Ntihanyurwa")
+
+    raw = parse_lines(read_pdf(_make_pdf(tmp_path, draw), tmp_path / "img"))
+    assert raw[0]["image"]["src"].endswith(".webp")
+    assert all("image" not in o for o in raw[0]["options"])
+
+
+def test_pictures_beside_bare_labels_belong_to_those_options(tmp_path):
+    from extract import read_pdf
+
+    def draw(page, picture):
+        page.insert_text((50, 80), "1. Icyapa?")
+        picture((60, 100, 140, 180), (200, 0, 0))
+        picture((210, 100, 290, 180), (0, 0, 200))
+        page.insert_text((50, 178), "a)")
+        page.insert_text((190, 178), "b)")
+
+    raw = parse_lines(read_pdf(_make_pdf(tmp_path, draw), tmp_path / "img"))
+    assert "image" not in raw[0]
+    assert raw[0]["options"][0]["image"]["src"] != raw[0]["options"][1]["image"]["src"]
+
+
+def test_picture_printed_just_above_the_next_stem_belongs_to_that_question(tmp_path):
+    from extract import read_pdf
+
+    def draw(page, picture):
+        page.insert_text((50, 60), "1. First question?")
+        page.insert_text((50, 80), "a) x")
+        page.insert_text((50, 100), "b) y")
+        picture((200, 120, 280, 200), (0, 0, 200))
+        page.insert_text((50, 195), "2. Iki cyapa gisobanura iki?")
+        page.insert_text((50, 220), "a) p")
+        page.insert_text((50, 240), "b) q")
+
+    raw = parse_lines(read_pdf(_make_pdf(tmp_path, draw), tmp_path / "img"))
+    assert "image" not in raw[0] and all("image" not in o for o in raw[0]["options"])
+    assert raw[1]["image"]["src"].endswith(".webp")
