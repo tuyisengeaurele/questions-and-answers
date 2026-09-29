@@ -19,6 +19,7 @@ Q_START = re.compile(r"^(\d{1,3})(?:\s*[.)]\s*|(?=[A-Z]))(\S.*)$")
 Q_BARE = re.compile(r"^(\d{1,3})\s*[.)]\s*$")
 OPT_START = re.compile(r"^\(?\s*([a-dA-D])\s*[.)]\s*(.*)$")
 MAX_IMG_WIDTH = 480
+KEYS = "abcdefghij"
 
 
 @dataclass
@@ -76,13 +77,13 @@ def parse_lines(lines: list[Line]) -> list[dict]:
                 option["image"] = cur["pending"].pop(key)
             cur["options"].append(option)
             if ln.red:
-                cur["red"].append(key)
+                cur["red"].append(len(cur["options"]) - 1)
             continue
         if cur["options"]:
             last = cur["options"][-1]
             last["text"] = f"{last['text']} {t}".strip()
             if ln.red:
-                cur["red"].append(last["key"])
+                cur["red"].append(len(cur["options"]) - 1)
         else:
             cur["text"] = f"{cur['text']} {t}".strip()
     return questions
@@ -102,9 +103,14 @@ def finalize(raw: list[dict], overrides: dict) -> tuple[list[dict], list[str]]:
         if ov.get("exclude"):
             report.append(f"{label}: excluded by override")
             continue
-        options = ov.get("options", q["options"])
+        options = ov.get("options")
+        if options is None:
+            printed = "".join(o["key"] for o in q["options"])
+            options = [{**o, "key": KEYS[i]} for i, o in enumerate(q["options"])]
+            if printed != KEYS[: len(printed)]:
+                report.append(f"{label}: note: option labels printed as '{printed}', renumbered by position")
+        red = sorted({KEYS[i] for i in q["red"]})
         text = ov.get("text", q["text"]).strip()
-        red = sorted(set(q["red"]))
         answer = ov.get("answer") or (red[0] if len(red) == 1 else None)
         problems = []
         if not 2 <= len(options) <= 4:
@@ -156,7 +162,7 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
         for block in page.get_text("dict")["blocks"]:
             if block["type"] == 1:
                 x0, y0, x1, y1 = block["bbox"]
-                if (x1 - x0) < 24 or (y1 - y0) < 24:
+                if (x1 - x0) < 8 or (y1 - y0) < 8 or (x1 - x0) * (y1 - y0) < 400:
                     continue  # bullets, rules
                 if y0 < 50 or y1 > page.rect.height - 40:
                     continue  # header/footer decoration
@@ -173,15 +179,21 @@ def read_pdf(path: Path, img_dir: Path) -> list[Line]:
         for bbox, line, _ in texts:
             items.append((round(bbox[1] / 4), bbox[0], line))
         for (x0, y0, x1, y1), data in images:
-            owner, best = None, 60.0
-            for (lx0, ly0, lx1, ly1), _, key in texts:
+            owner, best, label_box = None, 60.0, None
+            for box, _, key in texts:
                 if key is None:
                     continue
+                lx0, ly0, lx1, ly1 = box
                 centre = (ly0 + ly1) / 2
                 gap = x0 - lx1
                 if y0 <= centre <= y1 + 2 and -6 <= gap < best:
-                    owner, best = key, gap
-            items.append((round(y1 / 4), x0, Line(image=save_image(data, img_dir), owner=owner)))
+                    owner, best, label_box = key, gap, box
+            line = Line(image=save_image(data, img_dir), owner=owner)
+            if label_box:
+                # Sit right after the label line so the next question's stem cannot jump ahead.
+                items.append((round(label_box[1] / 4), label_box[2] + 0.5, line))
+            else:
+                items.append((round(y1 / 4), x0, line))
         items.sort(key=lambda it: (it[0], it[1]))
         lines.extend(line for _, _, line in items)
     return lines

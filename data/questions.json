@@ -4786,15 +4786,15 @@
     "text": "Kureka amatara ndanga akaguma yaka"
    },
    {
-    "key": "a",
+    "key": "b",
     "text": "Kureka amatara yo k,ubisikana na kamena-bihu akaguma yaka"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "Kureka amatara yo kubisikana akaguma yaka"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Kureka amatara y’urugendo akaguma yaka"
    }
   ],
@@ -4814,11 +4814,11 @@
     "text": "Iherezo ry’umuvuduko  muke ntarengwa utegetswe."
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "Iherezo ry’Umuvuduko muto utegetswe"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Umuvuduko uri hejuru 30 km/h"
    }
   ],
@@ -5633,15 +5633,15 @@
     }
    },
    {
-    "key": "a",
+    "key": "b",
     "text": "Birabujijwe kuhahagarara"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "Wegereye ahaguteza ibyago"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Kunyuranaho ntibyemewe"
    }
   ],
@@ -5874,15 +5874,15 @@
     "text": "Kumenya neza niba imbangukiragutabara yahamagawe"
    },
    {
-    "key": "a",
+    "key": "b",
     "text": "Guhagarika ibinyabiziga bindi no kubasaba ubufasha"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "A na b ni ibisubizo by’ukuri"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Nta gisubizo cy’ukuri"
    }
   ],
@@ -5895,7 +5895,12 @@
   "options": [
    {
     "key": "a",
-    "text": ""
+    "text": "",
+    "image": {
+     "src": "/q/59c84c55fb90.webp",
+     "w": 209,
+     "h": 42
+    }
    },
    {
     "key": "b",
@@ -5917,7 +5922,12 @@
    },
    {
     "key": "d",
-    "text": ""
+    "text": "",
+    "image": {
+     "src": "/q/d76a7154fdc2.webp",
+     "w": 194,
+     "h": 172
+    }
    }
   ],
   "answer": "b"
@@ -5936,11 +5946,11 @@
     "text": "Uruhusa rwa burundu  rwo gutwara ikinyabiziga"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "Uruhushya rwagateganyo"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Imikorere y’ikinyabiziga"
    }
   ],
@@ -6014,15 +6024,15 @@
     "text": "ibyago"
    },
    {
-    "key": "a",
+    "key": "b",
     "text": "ibibujijwe"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "ibitegetswe"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "ntagisubizo cy’ukuri kirimo"
    }
   ],
@@ -6685,7 +6695,7 @@
     "text": "Ni meza kuko atuma ureba kure"
    },
    {
-    "key": "c",
+    "key": "b",
     "text": "Ni mabi kuko arakugarukira akaguhuma amaso"
    },
    {
@@ -6697,7 +6707,7 @@
     "text": "Nta gisubizo cy’ukuri"
    }
   ],
-  "answer": "c"
+  "answer": "b"
  },
  {
   "id": 266,
@@ -6805,15 +6815,15 @@
     "text": "Umuyobozi w’ikinyabiziga agomba guhagarara"
    },
    {
-    "key": "a",
+    "key": "b",
     "text": "Umuyobozi w’ikinyabizigaagomba kuvuza ihoni  agukomeza"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "Umuyobozi w’ikinyabiziga agomba kugabanya umuvuduko"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Ibisubizo byose ni ukuri"
    }
   ],
@@ -6833,11 +6843,11 @@
     "text": "Ushobora kujya mu kindi gice cy’umuhanda bibaye ngombwa"
    },
    {
-    "key": "b",
+    "key": "c",
     "text": "Agomba guhagarika ikinyabiziga"
    },
    {
-    "key": "c",
+    "key": "d",
     "text": "Nta gisubizo cy’ukuri"
    }
   ],
@@ -9231,7 +9241,7 @@
     "text": "Nshobora gukata iburyo"
    },
    {
-    "key": "a",
+    "key": "b",
     "text": "Nshobora gukata ibumoso"
    },
    {
@@ -9243,7 +9253,7 @@
     "text": "Ntagisubizo cy’ukuri kirimo"
    }
   ],
-  "answer": "a",
+  "answer": "b",
   "image": {
    "src": "/q/8565718ea862.webp",
    "w": 480,

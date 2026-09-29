@@ -119,7 +119,7 @@ def test_dotted_options_with_and_without_space():
     assert len(raw) == 2
     assert [o["key"] for o in raw[0]["options"]] == ["a", "b", "c", "d"]
     assert raw[0]["options"][1]["text"] == "Gufungura"
-    assert raw[0]["red"] == ["c"]
+    assert raw[0]["red"] == [2]
     assert raw[1]["text"] == "Igihe ukurikiwe?"
 
 
@@ -177,3 +177,14 @@ def test_replacement_character_becomes_an_apostrophe():
     from extract import clean
 
     assert clean("w\ufffdimodoka cy\ufffdukuri") == "w\u2019imodoka cy\u2019ukuri"
+
+
+def test_mislabelled_options_are_renumbered_by_position_and_answer_follows():
+    raw = parse_lines([
+        L("1. Q?"), L("a) x"), L("a) y", RED), L("b) z"), L("c) w"),
+    ])
+    qs, report = finalize(raw, {})
+    assert [o["key"] for o in qs[0]["options"]] == ["a", "b", "c", "d"]
+    assert qs[0]["options"][1]["text"] == "y"
+    assert qs[0]["answer"] == "b"
+    assert any("renumbered" in r for r in report)
