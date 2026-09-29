@@ -33,6 +33,16 @@
 5. A question's image file fails to load or is missing → the question still renders and stays answerable (data test in Task 3, `onError` hide in Task 8).
 6. Options like "A and B are both correct" only make sense in printed order → selector never touches option arrays (tested in Task 4).
 
+> **Revision (owner decision, supersedes anything below that conflicts):** this is a learning quiz, not a game. Do NOT build XP, streaks, levels, daily goal, Sprint mode, `game.ts`, `level-bar`, `goal-ring`, or their constants/tests. Concretely:
+> - Constants: drop `SPRINT_SECONDS, DAILY_GOAL, XP_*, LEVEL_XP`.
+> - Task 5: only `scoring.ts` and `format.ts` (drop game rules tests).
+> - Task 6: `Progress` = `{v, stats, exams, cycle}`; `answer` action = `{id, correct}`; `summarize` returns `{answered, seen, accuracy, mistakes, unseen, examsPassed}`; drop streak/xp/day tests.
+> - Task 8: no streak chip; the round summary shows score plus a review list of missed questions (correct answer highlighted).
+> - Task 9 is replaced by moving `useCountdown` into Task 10; no Sprint page, no Sprint tile, no `/sprint` in offline warm-up.
+> - Task 11: home shows a coverage bar ("Seen X of N"), the tiles Practice / Mock exam / Mistakes / Browse, and the stats row (Answered, Accuracy, Seen, Exams passed).
+> - Transitions (all CSS, 150-250ms, off under reduced-motion): question rise/slide-in, staggered option entrance, eased colour change for right/wrong, feedback mark scale-in, animated progress bars, route fade via `src/app/template.tsx`, press feedback (`active:scale-[.98]`).
+> - The PDF is git-ignored.
+
 ---
 
 ## File Structure

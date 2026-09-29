@@ -6,3 +6,5 @@ __pycache__
 *.tsbuildinfo
 next-env.d.ts
 .scratch
+.superpowers
+*.pdf
