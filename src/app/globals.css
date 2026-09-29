@@ -58,14 +58,14 @@
   color-scheme: dark;
 }
 
-/* Toggle icon: sun while dark (tap for light), moon while light (tap for dark). */
-.icon-moon { display: none; }
-:root[data-theme="light"] .icon-sun { display: none; }
-:root[data-theme="light"] .icon-moon { display: block; }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .icon-sun { display: none; }
-  :root:not([data-theme="dark"]) .icon-moon { display: block; }
-}
+/* Theme button: the icon shows the current choice (device, light or dark). */
+.pref-icon { display: none; }
+:root:not([data-pref]) .pref-system,
+:root[data-pref="system"] .pref-system,
+:root[data-pref="light"] .pref-light,
+:root[data-pref="dark"] .pref-dark { display: block; }
+
+html[data-size="large"] { font-size: 112.5%; }
 
 @theme inline {
   --color-bg: var(--bg);

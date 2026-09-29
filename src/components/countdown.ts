@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/** Remaining whole seconds; calls onEnd once when it reaches zero. Based on a deadline, so it does not drift. */
-export function useCountdown(seconds: number, onEnd: () => void): number {
-  const [left, setLeft] = useState(seconds);
+const secondsLeft = (endsAt: number) => Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+
+/** Whole seconds until `endsAt` (a timestamp). Calls onEnd once at zero. Based on the deadline, so it does not drift or restart. */
+export function useCountdown(endsAt: number, onEnd: () => void): number {
+  const [left, setLeft] = useState(() => secondsLeft(endsAt));
   const onEndRef = useRef(onEnd);
 
   useEffect(() => {
@@ -12,9 +14,8 @@ export function useCountdown(seconds: number, onEnd: () => void): number {
   });
 
   useEffect(() => {
-    const deadline = Date.now() + seconds * 1000;
     const id = setInterval(() => {
-      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      const remaining = secondsLeft(endsAt);
       setLeft(remaining);
       if (remaining === 0) {
         clearInterval(id);
@@ -22,7 +23,7 @@ export function useCountdown(seconds: number, onEnd: () => void): number {
       }
     }, 250);
     return () => clearInterval(id);
-  }, [seconds]);
+  }, [endsAt]);
 
   return left;
 }

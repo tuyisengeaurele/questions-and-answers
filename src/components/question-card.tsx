@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/lang-provider";
+import { useLightbox } from "@/components/lightbox";
+import { reportUrl } from "@/lib/report";
 import type { OptionKey, Pic, Question } from "@/lib/types";
 
 interface Props {
@@ -10,9 +13,11 @@ interface Props {
   reveal: boolean;
   disabled?: boolean;
   onPick?: (key: OptionKey) => void;
+  /** Move keyboard and screen-reader focus to the question when it appears. */
+  focusOnMount?: boolean;
 }
 
-function Picture({ pic, className }: { pic: Pic; className?: string }) {
+function Picture({ pic, className, eager }: { pic: Pic; className?: string; eager?: boolean }) {
   const [broken, setBroken] = useState(false);
   if (broken) return null;
   return (
@@ -22,7 +27,7 @@ function Picture({ pic, className }: { pic: Pic; className?: string }) {
       width={pic.w}
       height={pic.h}
       alt=""
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
       decoding="async"
       onError={() => setBroken(true)}
       className={className}
@@ -47,15 +52,30 @@ function Mark({ kind }: { kind: "right" | "wrong" }) {
   );
 }
 
-export function QuestionCard({ question, picked, reveal, disabled, onPick }: Props) {
+export function QuestionCard({ question, picked, reveal, disabled, onPick, focusOnMount }: Props) {
+  const { t } = useT();
+  const zoom = useLightbox();
+  const top = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (focusOnMount) top.current?.focus({ preventScroll: true });
+  }, [focusOnMount]);
+
   return (
     <div className="slide-in">
-      {question.text && <h2 className="text-lg font-semibold leading-snug">{question.text}</h2>}
-      {question.image && (
-        <div className="mt-4 flex justify-center rounded-2xl bg-white p-3">
-          <Picture pic={question.image} className="h-auto max-h-56 w-auto max-w-full" />
-        </div>
-      )}
+      <div ref={top} tabIndex={-1} className="outline-none">
+        {question.text && <h2 className="text-lg font-semibold leading-snug">{question.text}</h2>}
+        {question.image && (
+          <button
+            type="button"
+            onClick={() => zoom(question.image!)}
+            aria-label={t("card.zoom")}
+            className="press mt-4 flex w-full cursor-zoom-in justify-center rounded-2xl bg-white p-3"
+          >
+            <Picture pic={question.image} eager className="h-auto max-h-44 w-auto max-w-full sm:max-h-56" />
+          </button>
+        )}
+      </div>
       <ul className="mt-5 space-y-2.5">
         {question.options.map((o, i) => {
           const isAnswer = reveal && o.key === question.answer;
@@ -98,13 +118,25 @@ export function QuestionCard({ question, picked, reveal, disabled, onPick }: Pro
                     </span>
                   )}
                 </span>
-                {isAnswer && <span className="sr-only">Correct answer</span>}
-                {isWrongPick && <span className="sr-only">Your answer, incorrect</span>}
+                {isAnswer && <span className="sr-only">{t("card.correctSr")}</span>}
+                {isWrongPick && <span className="sr-only">{t("card.wrongSr")}</span>}
               </button>
             </li>
           );
         })}
       </ul>
+      {reveal && (
+        <p className="mt-3 text-right text-xs">
+          <a
+            href={reportUrl(question)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-mute underline-offset-4 hover:text-text hover:underline"
+          >
+            {t("card.report")}
+          </a>
+        </p>
+      )}
     </div>
   );
 }

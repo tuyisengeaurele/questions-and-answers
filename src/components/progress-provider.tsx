@@ -26,6 +26,16 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Another tab saved: pick up its progress instead of overwriting it later.
+    const onStorage = () => {
+      const next = loadProgress(getStorage());
+      dispatch({ type: "sync", state: next });
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
     if (!ready) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reflect whether the save worked
     setPersisted(saveProgress(getStorage(), progress));

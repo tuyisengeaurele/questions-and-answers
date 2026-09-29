@@ -1,54 +1,120 @@
 "use client";
 
 import { useState } from "react";
-import { QuestionCard } from "@/components/question-card";
+import { ActionBar, ActionBarSpacer } from "@/components/action-bar";
+import { useConfirm } from "@/components/confirm-dialog";
+import { useT } from "@/components/lang-provider";
+import { useLeaveGuard } from "@/components/leave-guard";
 import { useProgress } from "@/components/progress-provider";
+import { QuestionCard } from "@/components/question-card";
+import { focusIsOnControl, useKeys } from "@/components/use-keys";
+import { optionIndexForKey } from "@/lib/keys";
+import { clearResume, saveResume } from "@/lib/session";
+import { getStorage } from "@/lib/storage";
 import type { OptionKey, Question } from "@/lib/types";
 
-export function Round({ questions, onExit }: { questions: Question[]; onExit: () => void }) {
+interface Props {
+  questions: Question[];
+  /** Where a resumed round picks up. */
+  initial?: { index: number; picks: Record<number, OptionKey> };
+  /** Called when the round ends or is quit; `unanswered` are the questions never reached. */
+  onExit: (unanswered: number[]) => void;
+  /** Start a new round from the questions missed here. */
+  onRetry?: (missed: Question[]) => void;
+  /** Keep the round so it can be resumed after a refresh. */
+  persist?: boolean;
+}
+
+export function Round({ questions, initial, onExit, onRetry, persist = true }: Props) {
+  const { t } = useT();
   const { dispatch } = useProgress();
-  const [i, setI] = useState(0);
-  const [picked, setPicked] = useState<OptionKey | undefined>();
+  const confirm = useConfirm();
+  const [i, setI] = useState(initial?.index ?? 0);
+  const [picks, setPicks] = useState<Record<number, OptionKey>>(initial?.picks ?? {});
   const [done, setDone] = useState(false);
-  const [right, setRight] = useState(0);
-  const [picks, setPicks] = useState<Record<number, OptionKey>>({});
   const q = questions[i];
+  const picked = picks[q.id] as OptionKey | undefined;
+  const right = questions.filter((x) => picks[x.id] === x.answer).length;
+
+  useLeaveGuard(!done, { title: t("leave.roundTitle"), message: t("leave.roundMessage") });
+
+  function remember(index: number, nextPicks: Record<number, OptionKey>) {
+    if (persist) saveResume(getStorage(), "round", { ids: questions.map((x) => x.id), index, picks: nextPicks, savedAt: Date.now() });
+  }
 
   function pick(key: OptionKey) {
     if (picked) return;
     const ok = key === q.answer;
-    setPicks((p) => ({ ...p, [q.id]: key }));
-    setPicked(key);
-    if (ok) setRight((r) => r + 1);
+    const next = { ...picks, [q.id]: key };
+    setPicks(next);
+    remember(i, next);
+    if (!ok) navigator.vibrate?.(40);
     dispatch({ type: "answer", id: q.id, correct: ok });
   }
 
   function next() {
     if (i + 1 >= questions.length) {
+      clearResume(getStorage(), "round");
       setDone(true);
     } else {
       setI(i + 1);
-      setPicked(undefined);
+      remember(i + 1, picks);
     }
   }
+
+  async function quit() {
+    const ok = await confirm({
+      title: t("quit.title"),
+      message: t("quit.message"),
+      confirmLabel: t("quit.confirm"),
+      cancelLabel: t("quit.stay"),
+    });
+    if (!ok) return;
+    clearResume(getStorage(), "round");
+    onExit(questions.filter((x) => !picks[x.id]).map((x) => x.id));
+  }
+
+  useKeys((e) => {
+    if (done) return;
+    const index = optionIndexForKey(e.key, q.options.length);
+    if (index !== null) {
+      e.preventDefault();
+      pick(q.options[index].key);
+    } else if (picked && (e.key === "ArrowRight" || ((e.key === "Enter" || e.key === " ") && !focusIsOnControl()))) {
+      e.preventDefault();
+      next();
+    }
+  });
 
   if (done) {
     const missed = questions.filter((x) => picks[x.id] !== x.answer);
     return (
       <section className="space-y-8">
         <div className="rise space-y-2 pt-4 text-center">
-          <p className="text-sm text-mute">Round finished</p>
+          <p className="text-sm text-mute">{t("round.finished")}</p>
           <p className="tabular text-6xl font-semibold">
             {right}
             <span className="text-mute">/{questions.length}</span>
           </p>
         </div>
-        <button onClick={onExit} className="press min-h-14 w-full rounded-2xl bg-lime font-semibold text-on-lime">
-          Back to practice
-        </button>
+        <div className="grid gap-3">
+          {missed.length > 0 && onRetry && (
+            <button onClick={() => onRetry(missed)} className="press min-h-14 w-full rounded-2xl bg-lime font-semibold text-on-lime">
+              {t("round.retry")}
+            </button>
+          )}
+          <button
+            onClick={() => onExit([])}
+            className={`press min-h-14 w-full rounded-2xl font-semibold ${
+              missed.length > 0 && onRetry ? "border border-line" : "bg-lime text-on-lime"
+            }`}
+          >
+            {t("round.back")}
+          </button>
+        </div>
         {missed.length > 0 ? (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold">Review what you missed</h2>
+            <h2 className="text-lg font-semibold">{t("round.review")}</h2>
             <ol className="space-y-8">
               {missed.map((m) => (
                 <li key={m.id} className="rise border-b border-line pb-8">
@@ -58,7 +124,7 @@ export function Round({ questions, onExit }: { questions: Question[]; onExit: ()
             </ol>
           </div>
         ) : (
-          <p className="text-center text-mute">Nothing missed. Clean round.</p>
+          <p className="text-center text-mute">{t("round.clean")}</p>
         )}
       </section>
     );
@@ -66,9 +132,9 @@ export function Round({ questions, onExit }: { questions: Question[]; onExit: ()
 
   return (
     <section>
-      <header className="mb-5 flex items-center gap-4">
-        <button onClick={onExit} className="press min-h-12 min-w-12 pr-2 text-sm text-mute">
-          Quit
+      <header className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-4 bg-bg px-4 py-2 md:top-16">
+        <button onClick={quit} className="press min-h-12 min-w-12 pr-2 text-left text-sm text-mute">
+          {t("round.quit")}
         </button>
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-panel2" aria-hidden>
           <div
@@ -87,14 +153,19 @@ export function Round({ questions, onExit }: { questions: Question[]; onExit: ()
         reveal={picked !== undefined}
         disabled={picked !== undefined}
         onPick={pick}
+        focusOnMount={i > 0}
       />
-      <div className="mt-6 min-h-14">
-        {picked && (
-          <button onClick={next} className="press rise min-h-14 w-full rounded-2xl bg-lime font-semibold text-on-lime">
-            {i + 1 >= questions.length ? "Finish" : "Next"}
+      <p role="status" className="sr-only">
+        {picked ? (picked === q.answer ? t("answer.correct") : t("answer.wrong", { key: q.answer.toUpperCase() })) : ""}
+      </p>
+      <ActionBarSpacer />
+      {picked && (
+        <ActionBar>
+          <button onClick={next} className="press min-h-14 w-full rounded-2xl bg-lime font-semibold text-on-lime">
+            {i + 1 >= questions.length ? t("round.finish") : t("round.next")}
           </button>
-        )}
-      </div>
+        </ActionBar>
+      )}
     </section>
   );
 }

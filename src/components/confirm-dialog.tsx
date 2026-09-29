@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useT } from "@/components/lang-provider";
 
 interface ConfirmOptions {
   title: string;
@@ -16,6 +17,7 @@ type Confirm = (options: ConfirmOptions) => Promise<boolean>;
 const Ctx = createContext<Confirm | null>(null);
 
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useT();
   const dialog = useRef<HTMLDialogElement>(null);
   const resolver = useRef<((answer: boolean) => void) | null>(null);
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
@@ -72,7 +74,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                 onClick={() => close(false)}
                 className="press min-h-12 rounded-2xl border border-line font-medium"
               >
-                {options.cancelLabel ?? "Cancel"}
+                {options.cancelLabel ?? t("cancel")}
               </button>
               <button
                 type="button"
@@ -81,7 +83,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                   options.danger ? "bg-bad text-on-bad" : "bg-lime text-on-lime"
                 }`}
               >
-                {options.confirmLabel ?? "Confirm"}
+                {options.confirmLabel ?? t("confirm")}
               </button>
             </div>
           </div>

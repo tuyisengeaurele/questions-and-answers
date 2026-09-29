@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { questions } from "@/lib/questions";
+import { pictureSources } from "@/lib/meta";
+import { OFFLINE_KEY } from "@/lib/prefs";
 
 export function RegisterSW() {
   useEffect(() => {
@@ -11,12 +12,13 @@ export function RegisterSW() {
       .then(() => navigator.serviceWorker.ready)
       .then(() => {
         const warm = () => {
-          const srcs = new Set<string>();
-          for (const q of questions) {
-            if (q.image) srcs.add(q.image.src);
-            q.options.forEach((o) => o.image && srcs.add(o.image.src));
-          }
-          srcs.forEach((s) => fetch(s).catch(() => {}));
+          void Promise.allSettled(pictureSources.map((s) => fetch(s))).then(() => {
+            try {
+              localStorage.setItem(OFFLINE_KEY, "1");
+            } catch {
+              // Storage blocked: the "works offline" note simply stays hidden.
+            }
+          });
         };
         if ("requestIdleCallback" in window) window.requestIdleCallback(warm);
         else setTimeout(warm, 3000);
